@@ -1,0 +1,25 @@
+{
+  "vocabulary": "categories",
+  "vocabVersion": "1.0.0",
+  "description": "Only categories a published rule references. Schemes define these terms differently; terms are never merged. 'prefer-not' is a supported student answer and never satisfies a category rule.",
+  "entries": [
+    { "code": "general", "label": "General" },
+    { "code": "sc", "label": "Scheduled Caste", "aliases": ["SC"] },
+    { "code": "st", "label": "Scheduled Tribe", "aliases": ["ST"] },
+    { "code": "obc", "label": "Other Backward Class", "aliases": ["OBC"] },
+    { "code": "ews", "label": "Economically Weaker Section", "aliases": ["EWS"] },
+    { "code": "minority", "label": "Notified minority community" },
+    {
+      "code": "pwd",
+      "label": "Person with benchmark disability",
+      "aliases": ["PwD", "divyangjan"]
+    },
+    { "code": "other", "label": "Other category" },
+    { "code": "prefer-not", "label": "Prefer not to answer" },
+    {
+      "code": "cat-a",
+      "label": "Fixture category A",
+      "description": "Reserved for test fixtures only."
+    }
+  ]
+}

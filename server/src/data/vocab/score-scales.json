@@ -1,0 +1,20 @@
+{
+  "vocabulary": "score-scales",
+  "vocabVersion": "1.0.0",
+  "description": "Academic score scales. No conversion between scales happens anywhere without a cited scheme rule.",
+  "entries": [
+    { "code": "percentage", "label": "Percentage", "description": "0 to 100." },
+    {
+      "code": "percentile",
+      "label": "Percentile",
+      "description": "0 to 100; a rank position, not a mark."
+    },
+    { "code": "cgpa-10", "label": "CGPA on a 10-point scale", "description": "0 to 10." },
+    { "code": "cgpa-4", "label": "CGPA on a 4-point scale", "description": "0 to 4." },
+    {
+      "code": "grade",
+      "label": "Letter grade",
+      "description": "Compared only by an explicit list rule."
+    }
+  ]
+}

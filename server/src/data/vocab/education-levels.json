@@ -1,0 +1,32 @@
+{
+  "vocabulary": "education-levels",
+  "vocabVersion": "1.0.0",
+  "description": "Level of study a student is currently in. Codes are stable; labels are UI copy.",
+  "entries": [
+    {
+      "code": "school",
+      "label": "School",
+      "description": "Class 1 to Class 12 in a recognised school."
+    },
+    {
+      "code": "diploma-technical",
+      "label": "Diploma or technical education",
+      "aliases": ["polytechnic"]
+    },
+    {
+      "code": "undergraduate",
+      "label": "Undergraduate degree",
+      "aliases": ["graduation", "bachelor"]
+    },
+    {
+      "code": "postgraduate",
+      "label": "Postgraduate degree",
+      "aliases": ["post-graduation", "master"]
+    },
+    {
+      "code": "other",
+      "label": "Other",
+      "description": "Never matches a rule that names a specific level."
+    }
+  ]
+}

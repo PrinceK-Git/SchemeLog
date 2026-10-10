@@ -6,3 +6,6 @@ playwright-report/
 .env.*
 !.env.example
 *.local
+
+.cache/
+*.log

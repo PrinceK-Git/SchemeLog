@@ -1,0 +1,19 @@
+{
+  "vocabulary": "school-stages",
+  "vocabVersion": "1.0.0",
+  "description": "School class a student is currently in. Only used when a school scheme is published.",
+  "entries": [
+    { "code": "class-1", "label": "Class 1" },
+    { "code": "class-2", "label": "Class 2" },
+    { "code": "class-3", "label": "Class 3" },
+    { "code": "class-4", "label": "Class 4" },
+    { "code": "class-5", "label": "Class 5" },
+    { "code": "class-6", "label": "Class 6" },
+    { "code": "class-7", "label": "Class 7" },
+    { "code": "class-8", "label": "Class 8" },
+    { "code": "class-9", "label": "Class 9" },
+    { "code": "class-10", "label": "Class 10" },
+    { "code": "class-11", "label": "Class 11" },
+    { "code": "class-12", "label": "Class 12" }
+  ]
+}

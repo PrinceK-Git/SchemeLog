@@ -1,0 +1,38 @@
+{
+  "vocabulary": "courses",
+  "vocabVersion": "1.0.0",
+  "description": "Only courses that a published scheme rule names, plus 'other'. 'other' never matches a rule that names a specific course.",
+  "entries": [
+    { "code": "school-secondary", "label": "Secondary school (Class 9-10)" },
+    { "code": "school-higher-secondary", "label": "Higher secondary school (Class 11-12)" },
+    { "code": "ug-arts", "label": "Undergraduate arts or humanities", "aliases": ["BA"] },
+    { "code": "ug-science", "label": "Undergraduate science", "aliases": ["BSc"] },
+    { "code": "ug-commerce", "label": "Undergraduate commerce", "aliases": ["BCom"] },
+    {
+      "code": "ug-btech",
+      "label": "Undergraduate engineering or technology",
+      "aliases": ["BE", "BTech"]
+    },
+    {
+      "code": "ug-medicine",
+      "label": "Undergraduate medicine or health sciences",
+      "aliases": ["MBBS", "BDS"]
+    },
+    { "code": "ug-professional-other", "label": "Other undergraduate professional course" },
+    { "code": "pg-arts", "label": "Postgraduate arts or humanities", "aliases": ["MA"] },
+    { "code": "pg-science", "label": "Postgraduate science", "aliases": ["MSc"] },
+    {
+      "code": "pg-commerce-management",
+      "label": "Postgraduate commerce or management",
+      "aliases": ["MCom", "MBA"]
+    },
+    {
+      "code": "pg-mtech",
+      "label": "Postgraduate engineering or technology",
+      "aliases": ["ME", "MTech"]
+    },
+    { "code": "diploma-technical", "label": "Technical diploma" },
+    { "code": "diploma-vocational", "label": "Vocational training" },
+    { "code": "other", "label": "Other course" }
+  ]
+}

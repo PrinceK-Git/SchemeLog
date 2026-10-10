@@ -1,0 +1,28 @@
+{
+  "name": "@schemelog/server",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Phase 2 catalogue contracts, offline publication tooling, and opt-in source checks. Runtime API deferred.",
+  "type": "module",
+  "scripts": {
+    "validate:catalogue": "node scripts/validate-catalogue.mjs",
+    "validate:registry": "node scripts/validate-registry.mjs",
+    "build:catalogue": "node scripts/build-catalogue.mjs",
+    "sources:fetch": "node scripts/sources/fetch.mjs",
+    "sources:extract": "node scripts/sources/extract.mjs",
+    "sources:report": "node scripts/sources/report.mjs",
+    "sources": "node scripts/sources.mjs",
+    "test": "node --test tests/**/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "node-html-parser": "^7.0.1",
+    "pdfjs-dist": "^4.10.38"
+  }
+}

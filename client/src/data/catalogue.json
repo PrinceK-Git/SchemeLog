@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "catalogueVersion": "2026-10-10.1",
+  "publishedAt": "2026-10-10T00:00:00+05:30",
+  "vocabVersion": "1.0.0",
+  "coverage": {
+    "domains": [
+      "student-scholarship"
+    ],
+    "jurisdictions": [],
+    "educationLevels": [],
+    "schemeCount": 0,
+    "statement": "No real scholarships have cleared independent human review. The frontend remains a labelled fictional demonstration, not a verified catalogue.",
+    "quarantined": []
+  },
+  "schemes": []
+}

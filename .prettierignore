@@ -4,3 +4,11 @@ package-lock.json
 test-results
 playwright-report
 docs/screenshots
+
+server/.cache
+server/sources/text
+server/sources/snapshots
+server/sources/diffs
+
+client/src/data/catalogue.json
+server/src/data/catalogue.json
