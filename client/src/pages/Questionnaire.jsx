@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../app/Session';
 import { answerLabel, fieldsFor, validateAnswers, visibleSections } from '../data/questions';
-import { Button, Notice } from '../components/UI';
+import { Button, Notice, CatalogueState, ModeDisclosure } from '../components/UI';
 import Icon from '../components/Icon';
 import './Questionnaire.css';
 
@@ -10,7 +10,12 @@ function Field({ id, definition, value, error, onChange }) {
   const hintId = `${id}-hint`;
   const describedBy =
     [definition.hint && hintId, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
-  const shared = { id, 'aria-describedby': describedBy, 'aria-invalid': Boolean(error) };
+  const shared = {
+    id,
+    'aria-label': definition.label,
+    'aria-describedby': describedBy,
+    'aria-invalid': Boolean(error),
+  };
   return (
     <div className="field">
       {definition.type === 'radio' ? (
@@ -40,7 +45,9 @@ function Field({ id, definition, value, error, onChange }) {
         <>
           <label htmlFor={id}>
             {definition.label}
-            <span className="field__optional">Optional</span>
+            <span className="field__optional" aria-hidden="true">
+              Optional
+            </span>
           </label>
           {definition.type === 'number' ? (
             <div className="number-wrap">
@@ -48,14 +55,13 @@ function Field({ id, definition, value, error, onChange }) {
                 {...shared}
                 type="number"
                 inputMode="decimal"
-                min="0"
-                max="100"
-                step="any"
-                value={value || ''}
+                min={definition.min}
+                max={definition.max}
+                step={definition.step ?? 'any'}
+                value={value ?? ''}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder="e.g. 75"
               />
-              <span>%</span>
+              <span>{definition.unit}</span>
             </div>
           ) : (
             <select {...shared} value={value || ''} onChange={(e) => onChange(e.target.value)}>
@@ -83,16 +89,37 @@ function Field({ id, definition, value, error, onChange }) {
   );
 }
 export default function Questionnaire() {
-  const { draftProfile, dispatch, submittedProfile } = useSession();
+  const {
+    draftProfile,
+    dispatch,
+    submission,
+    questionPlan,
+    catalogueStatus,
+    catalogueLoad,
+    mode,
+    submit: submitProfile,
+  } = useSession();
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState({});
   const stepTitle = useRef(null);
   const firstRender = useRef(true);
+  const errorSummary = useRef(null);
   const navigate = useNavigate();
-  const sections = visibleSections(draftProfile);
-  const definitions = fieldsFor(draftProfile);
-  const reviewing = step === sections.length;
-  const section = sections[step];
+  const sections = questionPlan ? visibleSections(draftProfile, questionPlan) : [];
+  const definitions = questionPlan ? fieldsFor(draftProfile, questionPlan) : {};
+  const activeStep = Math.min(step, sections.length);
+  const reviewing = activeStep === sections.length;
+  const section = sections[activeStep];
+  const presented = (reviewing ? sections.flatMap((s) => s.fields) : section?.fields || []).join(
+    '|',
+  );
+  useEffect(() => {
+    if (catalogueStatus === 'ready')
+      dispatch({ type: 'presented', fields: presented ? presented.split('|') : [] });
+  }, [catalogueStatus, presented, dispatch]);
+  useEffect(() => {
+    if (step > sections.length) setStep(sections.length);
+  }, [step, sections.length]);
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
@@ -106,24 +133,46 @@ export default function Questionnaire() {
   }
   function submit(event) {
     event.preventDefault();
-    const found = validateAnswers(draftProfile, reviewing ? undefined : section.fields);
+    const found = validateAnswers(
+      draftProfile,
+      reviewing ? undefined : section.fields,
+      questionPlan,
+    );
     setErrors(found);
     if (Object.keys(found).length) {
       const first = Object.keys(found)[0];
-      if (reviewing) setStep(sections.findIndex((s) => s.fields.includes(first)));
-      requestAnimationFrame(() => document.getElementById(first)?.focus());
+      const target = sections.findIndex((s) => s.fields.includes(first));
+      if (reviewing && target >= 0) setStep(target);
+      requestAnimationFrame(() =>
+        (document.getElementById(first) || errorSummary.current)?.focus(),
+      );
       return;
     }
     if (reviewing) {
-      dispatch({ type: 'submit' });
-      navigate('/results');
+      const result = submitProfile();
+      if (result.ok) navigate('/results');
+      else {
+        setErrors(
+          Object.fromEntries(
+            result.errors.map((error) => [error.field || 'submission', error.message]),
+          ),
+        );
+        requestAnimationFrame(() => errorSummary.current?.focus());
+      }
     } else setStep(step + 1);
   }
+  if (catalogueStatus !== 'ready')
+    return (
+      <div className="container page">
+        <h1>Your student profile</h1>
+        <CatalogueState />
+      </div>
+    );
   return (
     <div className="container page">
-      <Link to={submittedProfile ? '/results' : '/'} className="back-link">
+      <Link to={submission ? '/results' : '/'} className="back-link">
         <Icon name="arrow" size={16} />
-        {submittedProfile ? 'Back to preview results' : 'Back to home'}
+        {submission ? 'Back to results' : 'Back to home'}
       </Link>
       <div className="questionnaire-layout">
         <aside className="questionnaire-aside">
@@ -177,6 +226,18 @@ export default function Questionnaire() {
             <span style={{ width: `${((step + 1) / (sections.length + 1)) * 100}%` }} />
           </div>
           <form className="questionnaire-card" onSubmit={submit} noValidate>
+            {Object.keys(errors).length > 0 && (
+              <div role="alert" tabIndex="-1" ref={errorSummary}>
+                <strong>Please check these answers.</strong>
+                <ul>
+                  {Object.entries(errors)
+                    .filter(([, message]) => message)
+                    .map(([field, message]) => (
+                      <li key={field}>{message}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
             <span className="eyebrow">{reviewing ? 'One last look' : section.short}</span>
             <h2 tabIndex="-1" ref={stepTitle}>
               {reviewing ? 'Does everything look right?' : section.title}
@@ -205,7 +266,7 @@ export default function Questionnaire() {
                       {s.fields.map((id) => (
                         <div key={id}>
                           <dt>{definitions[id].label}</dt>
-                          <dd>{answerLabel(draftProfile, id)}</dd>
+                          <dd>{answerLabel(draftProfile, id, questionPlan)}</dd>
                         </div>
                       ))}
                     </dl>
@@ -219,7 +280,11 @@ export default function Questionnaire() {
                     key={id}
                     id={id}
                     definition={definitions[id]}
-                    value={draftProfile[id]}
+                    value={
+                      id.startsWith('additionalAnswers.')
+                        ? draftProfile.additionalAnswers?.[id.split('.')[1]]
+                        : draftProfile[id]
+                    }
                     error={errors[id]}
                     onChange={(value) => {
                       dispatch({ type: 'answer', field: id, value });
@@ -237,14 +302,7 @@ export default function Questionnaire() {
                 )}
               </div>
             )}
-            {reviewing && (
-              <Notice title="You’re exploring a demo.">
-                <p>
-                  The next screen shows fictional result examples, not an eligibility calculation
-                  based on these answers.
-                </p>
-              </Notice>
-            )}
+            {reviewing && <ModeDisclosure mode={mode} coverage={catalogueLoad.coverage} />}
             <div className="form-navigation">
               <Button
                 type="button"

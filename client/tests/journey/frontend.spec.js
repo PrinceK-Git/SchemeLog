@@ -1,160 +1,204 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { mkdir } from 'node:fs/promises';
 
 async function accessibility(page) {
   const report = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
   expect(
-    report.violations.map((v) => ({
-      id: v.id,
-      description: v.description,
-      nodes: v.nodes.map((n) => n.target),
-    })),
+    report.violations.map(({ id, nodes }) => ({ id, nodes: nodes.map((node) => node.target) })),
   ).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
 }
-async function screenshot(page, name, project) {
-  await mkdir('../docs/screenshots', { recursive: true });
-  await page.locator('h1').focus();
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-  await page.screenshot({ path: `../docs/screenshots/${name}-${project}.png`, fullPage: true });
-}
-async function enterProfile(page) {
+const card = (page, name) =>
+  page.locator('.scheme-card').filter({ has: page.getByRole('heading', { name, exact: true }) });
+const learning = 'Learning Pathways Demo Scholarship';
+async function profile(page, income = 'middle', level = 'Undergraduate degree') {
   await page.goto('/questionnaire');
-  await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
-  await page.getByLabel('Course or stream').selectOption('Science');
-  await page.getByLabel('Current year of study').selectOption('Year 2');
+  await page.getByRole('radio', { name: level, exact: true }).check();
+  await expect(page.getByLabel('State or union territory of domicile')).toHaveCount(0);
+  await expect(page.getByLabel('Category', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByLabel('State or union territory of domicile').selectOption('Assam');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByLabel('Annual household income').selectOption('1-2.5');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByLabel('Institution type').selectOption('Government');
-  await page.getByLabel('Category', { exact: false }).selectOption('unknown');
-  await page.getByLabel('Previous examination score format').selectOption('percentage');
-  await page.getByLabel('Previous examination percentage').fill('75');
+  const select = page.getByLabel('Annual household income', { exact: true });
+  if (income === 'declined') await select.selectOption('declined');
+  else {
+    const options = await select.locator('option').allTextContents();
+    const label = options.find((text) =>
+      income === 'low'
+        ? /^Up to/.test(text)
+        : income === 'high'
+          ? /^Above/.test(text) && !/up to/i.test(text)
+          : /^Above/.test(text) && /up to/i.test(text),
+    );
+    expect(label).toBeTruthy();
+    await select.selectOption({ label });
+  }
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Does everything look right?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await expect(page.locator('.scheme-card')).toHaveCount(4);
 }
 
-test('complete journey, accessible layouts, official links, and memory-only preparation', async ({
+test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy', async ({
   page,
-}, testInfo) => {
-  const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+}) => {
+  const pageErrors = [];
+  const externalRequests = [];
+  const consoleMessages = [];
+  const personalRequests = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => consoleMessages.push(message.text()));
+  page.on('request', (request) => {
+    if (
+      request.method() !== 'GET' ||
+      /undergraduate|annualHouseholdIncome|250000|draftProfile/.test(request.url())
+    )
+      personalRequests.push(request.url());
+    if (!request.url().startsWith('http://127.0.0.1:4173/')) externalRequests.push(request.url());
+  });
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Find scholarships');
+  await expect(
+    page.getByText('Demo rules evaluated as of 10 October 2026.', { exact: true }),
+  ).toBeVisible();
   await accessibility(page);
-  await screenshot(page, '01-landing', testInfo.project.name);
-  await page.getByRole('link', { name: 'Find My Scholarships' }).focus();
+  await page.getByRole('link', { name: 'Try the demo', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/questionnaire/);
   await accessibility(page);
-  await screenshot(page, '02-questionnaire', testInfo.project.name);
-  await enterProfile(page);
+  await profile(page);
+  await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
+  await expect(page.getByText('1 potential match among 4 fictional scholarships.')).toBeVisible();
+  await card(page, learning).getByText('Why this result', { exact: true }).click();
+  await expect(
+    card(page, learning)
+      .getByText(/Your submitted answer:/)
+      .first(),
+  ).toBeVisible();
+  await expect(
+    card(page, learning)
+      .getByText(/Fictional test condition:/)
+      .first(),
+  ).toBeVisible();
   await accessibility(page);
-  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
-  await expect(page.getByRole('heading', { name: 'Potential match', exact: true })).toBeVisible();
-  await expect(page.locator('.scheme-card')).toHaveCount(4);
-  await expect(
-    page.getByRole('heading', { name: 'Needs verification', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Does not meet a known condition', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Information unavailable', exact: true }),
-  ).toBeVisible();
-  await page.getByText('Why this matches', { exact: true }).click();
-  await expect(page.getByText(/prewritten assessment is not calculated/)).toBeVisible();
-  await accessibility(page);
-  await screenshot(page, '03-results', testInfo.project.name);
-  await page.getByRole('link', { name: 'View requirements' }).first().click();
-  await expect(
-    page.getByRole('heading', { name: 'Learning Pathways Scholarship', exact: true }),
-  ).toBeVisible();
-  await page.getByRole('checkbox', { name: /Admission or bonafide/ }).check();
-  await expect(page.getByRole('status')).toHaveText('1 of 3 example tasks marked prepared');
-  await accessibility(page);
-  await screenshot(page, '04-details', testInfo.project.name);
-  const official = page.getByRole('link', { name: /Visit official source:/ });
-  await expect(official).toHaveAttribute('href', 'https://scholarships.gov.in/');
-  await expect(official).toHaveAttribute('rel', 'noopener noreferrer');
+  await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const select = page.getByLabel('Annual household income', { exact: true });
+  const label = (await select.locator('option').allTextContents()).find(
+    (text) => /^Above/.test(text) && !/up to/i.test(text),
+  );
+  await select.selectOption({ label });
   await page.getByRole('link', { name: 'Back to results', exact: true }).click();
-  await page.getByRole('link', { name: 'View requirements' }).first().click();
-  await expect(page.getByRole('checkbox', { name: /Admission or bonafide/ })).toBeChecked();
-  expect(
-    await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),
-  ).toEqual({ local: 0, session: 0 });
-  await expect(page).not.toHaveURL(/Assam|75|Science/);
-  await page.reload();
-  await expect(page.getByRole('checkbox', { name: /Admission or bonafide/ })).not.toBeChecked();
-  await expect(page.getByText('No profile submitted in this session.')).toBeVisible();
-  expect(errors).toEqual([]);
-});
-
-test('validation, correction, conditional answers, and stale-profile messaging', async ({
-  page,
-}) => {
-  await enterProfile(page);
-  await page.getByRole('button', { name: 'Edit other details answers' }).click();
-  await page.getByLabel('Previous examination percentage').fill('101');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('between 0 and 100');
-  await expect(page.getByLabel('Previous examination percentage')).toBeFocused();
-  await page.getByLabel('Previous examination percentage').fill('0');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByText('0%', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
-  await page.getByRole('link', { name: 'Edit answers', exact: true }).click();
-  await page.getByRole('radio', { name: 'School', exact: true }).check();
-  await expect(page.getByLabel('Course or stream')).toHaveValue('');
-  await page.getByRole('link', { name: 'Back to preview results' }).click();
-  await expect(page.getByText('Your answers have changed.')).toBeVisible();
+  await expect(page.getByText('Your answers have changed.', { exact: true })).toBeVisible();
+  await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
   await page.getByRole('link', { name: 'Review and resubmit your answers' }).click();
-  for (let i = 0; i < 4; i++)
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByText('Previous examination percentage', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('Assam', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
-  await expect(page.getByText('Your answers have changed.')).toHaveCount(0);
-  await expect(page.locator('.profile-card')).toContainText('School');
+  await expect(card(page, learning).locator('.badge')).toHaveText(
+    'Does not meet a known condition',
+  );
+  await expect(page.getByText('Your answers have changed.', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Preview scenario')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => ({
+      local: localStorage.length,
+      session: sessionStorage.length,
+      cookie: document.cookie,
+    })),
+  ).toEqual({ local: 0, session: 0, cookie: '' });
+  expect(externalRequests).toEqual([]);
+  expect(personalRequests).toEqual([]);
+  expect(consoleMessages.join(' ')).not.toMatch(
+    /undergraduate|annualHouseholdIncome|250000|draftProfile/,
+  );
+  expect(pageErrors).toEqual([]);
 });
 
-test('incomplete answers, empty/error scenarios, filters, direct entry, and unknown routes', async ({
+test('honest uncertainty, manual alternatives, conditional documents and unknown dates', async ({
   page,
 }) => {
+  await profile(page, 'declined');
+  await expect(card(page, learning).locator('.badge')).toHaveText('Needs verification');
+  const next = card(page, 'Next Chapter Demo Grant');
+  await next.getByText('Why this result', { exact: true }).click();
+  await expect(
+    next.getByText('An alternative is satisfied; the other alternatives are not required.'),
+  ).toBeVisible();
+  await expect(next.getByText('Manual check required')).toBeVisible();
+  await expect(next.getByText(/Alternative\/exclusion context: Not satisfied/)).toBeVisible();
+  await accessibility(page);
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await expect(page.getByText('May be required — check this condition')).toBeVisible();
+  await expect(page.getByText('Unknown — no confirmed deadline')).toBeVisible();
+  await page.getByRole('checkbox').check();
+  await expect(page.getByText('You marked 0 preparation tasks as done.')).toBeVisible();
+  await accessibility(page);
+});
+
+test('preparation persists in memory, applicability changes and direct routes recover honestly', async ({
+  page,
+}) => {
+  await profile(page, 'low');
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await expect(page).toHaveURL(/scholarships\/demo-learning-pathways/);
+  await expect(page.getByText('Required for the supplied answers', { exact: true })).toBeVisible();
+  await page.getByRole('checkbox').check();
+  await expect(page.getByText('You marked 1 preparation task as done.')).toBeVisible();
+  await page.getByRole('link', { name: 'Back to results' }).click();
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await expect(page.getByRole('checkbox')).toBeChecked();
+  await accessibility(page);
+  for (const link of await page.locator('a[target="_blank"]').all()) {
+    expect(await link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(await link.getAttribute('href')).not.toMatch(/income|undergraduate|profile|\?/);
+  }
+  await page.getByRole('link', { name: 'Back to results' }).click();
+  await page.getByRole('link', { name: 'Edit answers', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const select = page.getByLabel('Annual household income', { exact: true });
+  const label = (await select.locator('option').allTextContents()).find(
+    (text) => /^Above/.test(text) && /up to/i.test(text),
+  );
+  await select.selectOption({ label });
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await expect(page.getByRole('checkbox')).toBeDisabled();
+  await expect(page.getByText('You marked 0 preparation tasks as done.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('No personal assessment in this session.')).toBeVisible();
+  await expect(page.locator('.badge')).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).not.toBeChecked();
+  await expect(page.getByRole('checkbox')).toBeDisabled();
+  await accessibility(page);
   await page.goto('/results');
   await expect(page.getByRole('heading', { name: 'Let’s get to know you first.' })).toBeVisible();
-  await page.getByRole('link', { name: 'Start the questionnaire' }).click();
-  for (let i = 0; i < 4; i++)
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
-  await expect(page.locator('.profile-card')).toContainText('Not answered');
-  await page.getByRole('button', { name: /Needs verification/ }).click();
-  await expect(page.locator('.scheme-card')).toHaveCount(1);
-  await expect(page.locator('.scheme-card')).toContainText('Next Chapter');
-  await page.getByLabel('Preview scenario').selectOption('empty');
-  await expect(page.getByRole('heading', { name: 'No results in this preview.' })).toBeVisible();
-  await accessibility(page);
-  await page.getByLabel('Preview scenario').selectOption('error');
-  await expect(page.getByRole('heading', { name: 'We couldn’t load the preview.' })).toBeVisible();
-  await page.getByRole('button', { name: 'Try again' }).click();
-  await expect(page.locator('.scheme-card')).toHaveCount(4);
-  await page.goto('/scholarships/next-chapter');
-  await expect(page.getByRole('heading', { name: 'Next Chapter Education Grant' })).toBeVisible();
-  await expect(page.getByText('Conditional', { exact: true })).toBeVisible();
   await page.goto('/scholarships/not-a-scheme');
   await expect(page.getByRole('heading', { name: 'We couldn’t find that page.' })).toBeVisible();
   await page.goto('/missing-page');
-  await expect(page.getByRole('link', { name: 'Back to home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back to home', exact: true })).toBeVisible();
 });
 
-test('tablet and narrow reflow, reduced motion, and landing anchors', async ({ page }) => {
+test('unknown answers, filters, school reset and responsive landing regressions', async ({
+  page,
+}) => {
+  await page.goto('/questionnaire');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await page.getByRole('button', { name: /^Needs verification/ }).click();
+  await expect(page.locator('.scheme-card')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Reset session' }).click();
+  await expect(page.getByRole('heading', { name: 'Let’s get to know you first.' })).toBeVisible();
+  await profile(page, 'low', 'School');
+  await expect(card(page, 'New Horizons Demo Award').locator('.badge')).toHaveText(
+    'Potential match',
+  );
+  await expect(card(page, 'Next Chapter Demo Grant').locator('.badge')).toHaveText(
+    'Does not meet a known condition',
+  );
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.goto('/');
   await accessibility(page);
@@ -167,4 +211,110 @@ test('tablet and narrow reflow, reduced motion, and landing anchors', async ({ p
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe(
     'auto',
   );
+});
+
+test('isolated reviewed empty/error/quarantine and retry never switch to demo', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4174/questionnaire');
+  await expect(
+    page.getByRole('heading', { name: 'No scholarships in this catalogue.' }),
+  ).toBeVisible();
+  await page.getByLabel('Isolated test scenario').selectOption('invalid');
+  await expect(
+    page.getByRole('heading', { name: 'We couldn’t load the catalogue.' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'We couldn’t load the catalogue.' }),
+  ).toBeVisible();
+  await expect(page.locator('.scheme-card')).toHaveCount(0);
+  await expect(
+    page.getByText('Interactive demo · Fictional scholarships', { exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel('Isolated test scenario').selectOption('quarantine');
+  await expect(page.getByText('Independent review is missing.')).toBeVisible();
+  await page.getByLabel('Isolated test scenario').selectOption('retry');
+  await expect(
+    page.getByRole('heading', { name: 'We couldn’t load the catalogue.' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'No scholarships in this catalogue.' }),
+  ).toBeVisible();
+});
+
+test('isolated strict income boundaries and score companions never invent certainty', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4174/questionnaire');
+  await page.getByLabel('Isolated test scenario').selectOption('strict');
+  await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page
+    .getByLabel('Annual household income', { exact: true })
+    .selectOption('income-open-100000-250000');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await expect(card(page, learning).locator('.badge')).toHaveText('Needs verification');
+  await card(page, learning).getByText('Why this result', { exact: true }).click();
+  await expect(
+    card(page, learning).getByText(/Your selected range crosses the limit/),
+  ).toBeVisible();
+  await page.getByLabel('Isolated test scenario').selectOption('companions');
+  await page.getByRole('link', { name: 'Start the questionnaire', exact: true }).click();
+  await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
+  await page.getByLabel('Total course duration in years', { exact: true }).fill('3');
+  await page.getByLabel('Current year of study', { exact: true }).selectOption('Year 2');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page
+    .getByLabel('Annual household income', { exact: true })
+    .selectOption('income-closed-0-100000');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Examination score format', { exact: true }).selectOption('cgpa');
+  await page.getByLabel('CGPA scale', { exact: true }).selectOption('cgpa-4');
+  await page
+    .getByLabel('Which examination does this score describe?', { exact: true })
+    .selectOption('class-12-board');
+  await page.getByLabel('Examination score', { exact: true }).fill('5');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('alert').first()).toContainText('from 0 to 4');
+  await page.getByLabel('Examination score', { exact: true }).fill('0');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByText('0 out of 4', { exact: true })).toBeVisible();
+  await accessibility(page);
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await expect(card(page, learning).locator('.badge')).toHaveText('Needs verification');
+  await card(page, learning).getByText('Why this result', { exact: true }).click();
+  await expect(
+    card(page, learning).getByText('Your score uses a different scale; it has not been converted.'),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
+  await page.getByRole('radio', { name: 'School', exact: true }).check();
+  await expect(page.getByLabel('Total course duration in years', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Current school class', { exact: true })).toHaveValue('');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Examination score format', { exact: true })).toHaveValue('');
+});
+
+test('keyboard activation completes the minimal questionnaire with focused step headings', async ({
+  page,
+}) => {
+  await page.goto('/questionnaire');
+  await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await page.getByRole('button', { name: 'Continue', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'A little about your household.' })).toBeFocused();
+  await page.getByLabel('Annual household income', { exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  await page.getByRole('button', { name: 'Continue', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Does everything look right?' })).toBeFocused();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 });

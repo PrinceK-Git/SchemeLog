@@ -1,222 +1,245 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSession } from '../app/Session';
 import { getScheme } from '../repositories/catalogue';
-import { Badge, Button, Notice, RuleExplanation, SourceLink } from '../components/UI';
-import Icon from '../components/Icon';
+import { preparationKey, preparationCounts } from '../app/submission.js';
+import { safeDestinations, presentFacts, displayedLastVerified } from '../presentation/scheme.js';
+import { catalogueMode } from '../data/catalogue-mode.js';
+import { applicationDisplay } from '../presentation/application.js';
+import {
+  Badge,
+  Button,
+  Notice,
+  RuleExplanation,
+  SourceLink,
+  CatalogueState,
+  ModeDisclosure,
+  StaleNotice,
+  AssessmentActions,
+} from '../components/UI';
 import NotFound from './NotFound';
 import './ScholarshipDetail.css';
 
 export default function ScholarshipDetail() {
   const { slug } = useParams();
-  const scheme = getScheme(slug);
-  const { submittedProfile, checklistProgress, dispatch, stale } = useSession();
-  if (!scheme) return <NotFound />;
-  const marked = scheme.documents.filter(
-    (d) => checklistProgress[`${scheme.id}:demo-v1:${d.id}`],
-  ).length;
+  const { submission, catalogueLoad, catalogueStatus, mode, checklistProgress, dispatch, stale } =
+    useSession();
+  const [viewedAt] = useState(() => new Date().toISOString());
+  if (catalogueStatus !== 'ready' && catalogueStatus !== 'empty')
+    return (
+      <div className="container page">
+        <h1>Scholarship information</h1>
+        <CatalogueState />
+      </div>
+    );
+  const savedRecord =
+    submission?.context.mode === mode ? getScheme(slug, submission.catalogueSnapshot) : null;
+  const record = savedRecord || getScheme(slug, catalogueLoad.catalogue);
+  if (!record) return <NotFound />;
+  const assessment =
+    savedRecord &&
+    submission.assessments.find(
+      (item) => item.schemeId === record.id && item.schemeVersion === record.recordVersion,
+    );
+  const context = assessment
+    ? submission.context
+    : { mode, evaluatedAt: mode === 'demo' ? catalogueMode.evaluatedAt : viewedAt };
+  const applicability = assessment ? submission.documentApplicability : {};
+  const counts = preparationCounts(record, applicability, checklistProgress);
+  const application = assessment?.applicationStatus;
+  const destinations = safeDestinations(record, context);
+  const facts = presentFacts(record, context);
+  const applicationView = applicationDisplay(application);
+  const lastVerified = displayedLastVerified(record, context, {
+    includeAssessment: Boolean(assessment),
+    includeApplication: Boolean(
+      applicationView.deadlineConfirmed || (application && application.status !== 'unknown'),
+    ),
+    includeDocuments: true,
+    includeApplicationSteps: facts.applicationSteps.length > 0,
+    links: destinations,
+  });
   return (
     <div className="container page">
-      <Link to={submittedProfile ? '/results' : '/'} className="back-link">
-        <Icon name="arrow" size={16} />
-        {submittedProfile ? 'Back to results' : 'Back to home'}
+      <Link className="back-link" to={submission ? '/results' : '/'}>
+        {submission ? 'Back to results' : 'Back to home'}
       </Link>
       <div className="detail-heading">
-        <span className="detail-monogram">{scheme.short}</span>
         <div>
-          <span className="eyebrow">{scheme.category} · Demo data</span>
-          <h1>{scheme.name}</h1>
-          <p>
-            {scheme.authority} · {scheme.classification}
-          </p>
+          <span className="eyebrow">
+            {mode === 'demo' ? 'Demo · Fictional scholarship' : 'Published scholarship'}
+          </span>
+          <h1>{record.officialName}</h1>
+          <p>Record version {record.recordVersion}</p>
         </div>
       </div>
-      <Notice title="This is a fictional scholarship example.">
-        <p>
-          No eligibility conditions, amounts, application dates, or documents here have been
-          verified for a real scheme. Official links below are general discovery resources.
-        </p>
-      </Notice>
+      <ModeDisclosure
+        mode={mode}
+        coverage={(assessment ? submission.catalogueSnapshot : catalogueLoad.catalogue).coverage}
+        evaluatedAt={assessment ? context.evaluatedAt : undefined}
+        quarantined={
+          (assessment ? submission.catalogueSnapshot : catalogueLoad.catalogue).coverage.quarantined
+        }
+      />
+      {assessment && <StaleNotice stale={stale} />}
+      {savedRecord &&
+        submission.context.catalogueVersion !== catalogueLoad.catalogue.catalogueVersion && (
+          <Notice title="Previous catalogue snapshot">
+            <p>
+              This detail uses the record from your last submission. Resubmit to use the current
+              catalogue.
+            </p>
+          </Notice>
+        )}
       <div className="detail-layout">
         <div className="detail-main">
           <section className="detail-section">
-            <span className="eyebrow">The opportunity</span>
-            <h2>A little support for the road ahead.</h2>
-            <p>{scheme.summary}</p>
-            <div className="benefit-box">
-              <Icon name="book" size={25} />
-              <div>
-                <span className="fact-label">Illustrative assistance</span>
-                <strong>{scheme.benefit}</strong>
-                <span>{scheme.amount}</span>
-              </div>
-            </div>
+            <h2>The opportunity</h2>
+            <p>{facts.summary || 'Current scheme summary is unconfirmed. Check the source.'}</p>
+            {facts.authority && <p>{facts.authority}</p>}
+            {facts.benefits.length ? (
+              <ul>
+                {facts.benefits.map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                Assistance:{' '}
+                {mode === 'demo'
+                  ? 'Not specified in this fictional example.'
+                  : 'Check current verified benefit information with the source.'}
+              </p>
+            )}
           </section>
           <section className="detail-section">
             <div className="detail-section__heading">
-              <h2>Understanding this result</h2>
-              <Badge status={scheme.status} />
+              <h2>{assessment ? 'Understanding this result' : 'Public scheme information'}</h2>
+              {assessment && <Badge status={assessment.status} />}
             </div>
-            {stale && (
-              <Notice tone="warning" title="Your profile has changed.">
+            {assessment ? (
+              <>
+                <RuleExplanation rows={assessment.ruleResults} mode={mode} />
+                <AssessmentActions assessment={assessment} />
+                <p className="small muted">
+                  Catalogue {context.catalogueVersion} · Engine {context.engineVersion} · Evaluated
+                  at {context.evaluatedAt}
+                </p>
+              </>
+            ) : (
+              <Notice title="No personal assessment in this session.">
                 <p>
-                  <Link to="/questionnaire">Review and resubmit your answers.</Link> This page
-                  continues to show a fictional scenario.
+                  <Link to="/questionnaire">Answer a few questions</Link> to see how the conditions
+                  apply to your supplied answers. No reference profile has been assumed.
                 </p>
               </Notice>
             )}
-            {!submittedProfile && (
-              <Notice title="No profile submitted in this session.">
-                <p>
-                  <Link to="/questionnaire">Answer a few questions</Link> to try the full journey.
-                  This example assessment is prewritten, not personal.
-                </p>
-              </Notice>
-            )}
-            <RuleExplanation scheme={scheme} />
-            <h3 className="detail-subheading">Conditions shown in this example</h3>
-            <ul className="condition-list">
-              {scheme.conditions.map((c) => (
-                <li key={c}>{c}</li>
-              ))}
-            </ul>
-            <p className="small muted">
-              <strong>Exclusions:</strong> {scheme.exclusion}
-            </p>
-          </section>
-          <section className="detail-section" id="checklist">
-            <span className="eyebrow">One step at a time</span>
-            <h2>Your preparation checklist</h2>
-            <p>
-              Mark what you have prepared. A checked box is your own note, not a verified
-              requirement or a completed application.
-            </p>
-            <div className="checklist-count" role="status">
-              {marked} of {scheme.documents.length} example tasks marked prepared
-            </div>
-            <div className="checklist">
-              {scheme.documents.map((doc) => {
-                const key = `${scheme.id}:demo-v1:${doc.id}`;
-                return (
-                  <div className="checklist-item" key={doc.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(checklistProgress[key])}
-                        onChange={(e) =>
-                          dispatch({ type: 'check', key, checked: e.target.checked })
-                        }
-                      />
-                      <span>
-                        <strong>{doc.title}</strong>
-                        <span className="checklist-item__action">I have prepared this</span>
-                      </span>
-                    </label>
-                    <div className="checklist-item__info">
-                      <span
-                        className={`requirement-tag ${doc.status === 'Conditional' ? 'requirement-tag--conditional' : ''}`}
-                      >
-                        {doc.status}
-                      </span>
-                      <p>{doc.note}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="small muted">
-              Checkmarks stay only during this session and clear on refresh. No files or document
-              details are collected.
-            </p>
           </section>
           <section className="detail-section">
-            <h2>What comes next?</h2>
+            <h2>Your preparation checklist</h2>
             <p>
-              The steps below illustrate preparation. The real scheme’s official guidelines must
-              specify its actual application process.
+              These are preparation reminders, not document verification or application completion.
             </p>
-            <ol className="application-steps">
-              <li>
-                <strong>Read the current official guidelines.</strong>
-                <p>Confirm the scheme, application cycle, conditions, and exclusions.</p>
-              </li>
-              <li>
-                <strong>Check the documents and dates.</strong>
-                <p>
-                  Verify what is required, which format is accepted, and whether applications are
-                  open.
+            {assessment && (
+              <>
+                <p className="checklist-count">
+                  You marked {counts.completed} preparation{' '}
+                  {counts.completed === 1 ? 'task' : 'tasks'} as done.
                 </p>
-              </li>
-              <li>
-                <strong>Apply through the official channel.</strong>
                 <p>
-                  Submit only on the verified application portal. Schemelog does not submit
-                  applications.
+                  {counts.applicable
+                    ? `${counts.applicable} tasks apply to your submitted answers.`
+                    : 'No confirmed applicable preparation tasks.'}{' '}
+                  {counts.unknown > 0 && `${counts.unknown} tasks may be required.`}
                 </p>
-              </li>
-            </ol>
+              </>
+            )}
+            {!record.documents.length && (
+              <p>No preparation documents are specified in this record.</p>
+            )}
+            {record.documents.map((document) => {
+              const key = preparationKey(record, document);
+              const result = applicability[key];
+              const text = !assessment
+                ? `Requirement: ${document.requirement}. Submit answers to check applicability.`
+                : {
+                    pass: 'Required for the supplied answers',
+                    fail: 'Not applicable for the supplied answers',
+                    unknown: 'May be required — check this condition',
+                  }[result?.outcome];
+              return (
+                <div className="checklist-item" key={key}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      disabled={!assessment || result?.outcome === 'fail'}
+                      checked={Boolean(assessment && checklistProgress[key])}
+                      onChange={(event) =>
+                        dispatch({ type: 'check', key, checked: event.target.checked })
+                      }
+                    />
+                    <span>
+                      <strong>{document.title}</strong>
+                      <span className="checklist-item__action">{text}</span>
+                    </span>
+                  </label>
+                  {result?.ruleResults.length > 0 && (
+                    <details>
+                      <summary>Why this preparation condition</summary>
+                      <RuleExplanation rows={result.ruleResults} mode={mode} />
+                    </details>
+                  )}
+                </div>
+              );
+            })}
           </section>
+          {facts.applicationSteps.length > 0 && (
+            <section className="detail-section">
+              <h2>Application guidance</h2>
+              <ol>
+                {facts.applicationSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </section>
+          )}
         </div>
         <aside className="detail-sidebar">
           <section className="application-card">
-            <span className="eyebrow">Application information</span>
-            <h2>Check before you apply.</h2>
+            <h2>Application information</h2>
             <dl>
               <div>
                 <dt>Application status</dt>
-                <dd>{scheme.applicationStatus}</dd>
-              </div>
-              <div>
-                <dt>Application cycle</dt>
-                <dd>Not verified</dd>
+                <dd>{applicationView.status}</dd>
               </div>
               <div>
                 <dt>Deadline</dt>
-                <dd>{scheme.deadline}</dd>
+                <dd>{applicationView.deadline}</dd>
               </div>
               <div>
                 <dt>Last verified</dt>
-                <dd>No verified date · demo record</dd>
+                <dd>
+                  {mode === 'demo'
+                    ? 'No verified date · fictional record'
+                    : lastVerified || 'No verified facts displayed'}
+                </dd>
               </div>
             </dl>
-            <SourceLink />
-            <p className="source-note">
-              Opens the National Scholarship Portal in a new tab. It is not an application link for
-              this example.
-            </p>
+            {destinations.map((destination) => (
+              <SourceLink key={destination.id} destination={destination} />
+            ))}
+            {!destinations.length && <p>No verified application destination is available here.</p>}
           </section>
           <section className="sources-card">
-            <h2>Sources & guidance</h2>
-            <div>
-              <span>Scheme-specific guidelines</span>
-              <strong>Unavailable for fictional records</strong>
-            </div>
-            <div>
-              <span>Scheme application link</span>
-              <strong>Not verified</strong>
-            </div>
-            <a
-              href="https://www.myscheme.gov.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-link"
-            >
-              Explore myScheme
-              <Icon name="external" size={15} />
+            <h2>General discovery resources</h2>
+            <a href="https://www.myscheme.gov.in/" target="_blank" rel="noopener noreferrer">
+              Explore myScheme (opens in a new tab)
             </a>
-            <p className="small muted">General discovery resource · Opens in a new tab.</p>
-          </section>
-          <div className="sidebar-note">
-            <Icon name="shield" />
-            <p>
-              We never ask for your Aadhaar, bank account numbers, government passwords, or OTPs.
+            <p className="small muted">
+              General resource, not an application link for this record.
             </p>
-          </div>
-          {!submittedProfile && (
-            <Button to="/questionnaire">
-              Try the questionnaire
-              <Icon name="arrow" size={16} />
-            </Button>
-          )}
+          </section>
+          {!assessment && <Button to="/questionnaire">Try the questionnaire</Button>}
         </aside>
       </div>
     </div>

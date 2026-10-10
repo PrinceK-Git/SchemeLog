@@ -76,3 +76,25 @@ test('unwired Phase 3 core bundles for the browser and executes without Node too
   );
   assert.equal(typeof bundled.normalizeProfile, 'function');
 });
+
+test('production application graph excludes legacy fixtures, draft records and test harnesses', async () => {
+  const result = await build({
+    root: fileURLToPath(root),
+    logLevel: 'silent',
+    build: { write: false },
+  });
+  const outputs = (
+    Array.isArray(result) ? result.flatMap((item) => item.output) : result.output
+  ).filter((item) => item.type === 'chunk');
+  for (const chunk of outputs) {
+    assert.doesNotMatch(
+      Object.keys(chunk.modules).join('\n'),
+      /src\/data\/fixtures\.js|tests\/browser|server\/src\/data\/schemes|server\/scripts|node:fs|pdfjs|node-html-parser/,
+    );
+    assert.doesNotMatch(
+      chunk.code,
+      /sch-nmmss|sch-pm-usp-csss|sch-pm-usp-sss-jk-ladakh|Isolated test scenario/,
+    );
+    assert.doesNotMatch(chunk.code, /These prewritten examples|not an eligibility calculation/);
+  }
+});

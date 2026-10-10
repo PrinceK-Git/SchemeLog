@@ -1,55 +1,50 @@
 import { Link } from 'react-router-dom';
-import { Badge, RuleExplanation, SourceLink } from './UI';
-import Icon from './Icon';
+import { Badge, RuleExplanation, SourceLink, AssessmentActions } from './UI';
+import { safeDestinations, presentFacts } from '../presentation/scheme.js';
 import './SchemeCard.css';
 
-export default function SchemeCard({ scheme }) {
+export default function SchemeCard({ record, assessment, context }) {
+  if (!record || record.recordVersion !== assessment.schemeVersion) return null;
+  const facts = presentFacts(record, context);
   return (
-    <article className="scheme-card">
+    <article className="scheme-card" data-scheme-id={record.id}>
       <div className="scheme-card__top">
-        <span className="scheme-card__monogram">{scheme.short}</span>
         <div>
-          <span className="eyebrow">{scheme.category}</span>
+          <span className="eyebrow">
+            {context.mode === 'demo' ? 'Demo · Fictional scholarship' : 'Published scholarship'}
+          </span>
           <h3>
-            <Link to={`/scholarships/${scheme.id}`}>{scheme.name}</Link>
+            <Link to={`/scholarships/${record.slug}`}>{record.officialName}</Link>
           </h3>
-          <p className="small muted">{scheme.authority} · Demo data</p>
         </div>
       </div>
       <div className="scheme-card__badges">
-        <Badge status={scheme.status} />
-        <span className="small muted">{scheme.classification}</span>
+        <Badge status={assessment.status} />
       </div>
-      <p>{scheme.summary}</p>
+      <p>{facts.summary || 'Current scheme summary is unconfirmed. Check the source.'}</p>
       <div className="scheme-card__facts">
         <div>
-          <span className="fact-label">Assistance</span>
-          <strong>{scheme.benefit}</strong>
-          <span className="small muted">{scheme.amount}</span>
-        </div>
-        <div>
           <span className="fact-label">Applications</span>
-          <strong>{scheme.applicationStatus}</strong>
-          <span className="small muted">Deadline: {scheme.deadline}</span>
+          <strong>
+            {assessment.applicationStatus.status === 'unknown'
+              ? 'Unknown — check current information'
+              : assessment.applicationStatus.status}
+          </strong>
         </div>
       </div>
       <details className="explanation">
-        <summary>
-          {scheme.status === 'potential' ? 'Why this matches' : 'Why this result'}
-          <Icon name="chevron" size={16} />
-        </summary>
-        <RuleExplanation scheme={scheme} />
+        <summary>Why this result</summary>
+        <RuleExplanation rows={assessment.ruleResults} mode={context.mode} />
+        <AssessmentActions assessment={assessment} />
       </details>
       <div className="scheme-card__actions">
-        <Link className="text-link" to={`/scholarships/${scheme.id}`}>
+        <Link className="text-link" to={`/scholarships/${record.slug}`}>
           View requirements
-          <Icon name="arrow" size={17} />
         </Link>
-        <SourceLink compact />
+        {safeDestinations(record, context).map((destination) => (
+          <SourceLink key={destination.id} destination={destination} compact />
+        ))}
       </div>
-      <p className="source-note">
-        Official link opens a general resource, not this fictional scheme.
-      </p>
     </article>
   );
 }

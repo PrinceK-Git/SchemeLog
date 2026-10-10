@@ -1,170 +1,126 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSession } from '../app/Session';
-import { answerLabel } from '../data/questions';
-import { assessmentGroups } from '../data/fixtures';
-import { getCatalogue } from '../repositories/catalogue';
+import { assessmentGroups, formatAnswer } from '../presentation/scheme.js';
+import { fieldLabels } from '../data/questions.js';
 import SchemeCard from '../components/SchemeCard';
-import { Button, Notice, StatePanel } from '../components/UI';
-import Icon from '../components/Icon';
+import {
+  Button,
+  Notice,
+  StatePanel,
+  CatalogueState,
+  ModeDisclosure,
+  StaleNotice,
+} from '../components/UI';
 import './Results.css';
 
 export default function Results() {
-  const { submittedProfile, stale } = useSession();
-  const [scenario, setScenario] = useState('complete');
+  const { submission, stale, catalogueStatus, catalogueLoad, dispatch } = useSession();
   const [filter, setFilter] = useState('all');
-  const [assessmentResults, setAssessmentResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-    getCatalogue(scenario)
-      .then((records) => {
-        if (active) setAssessmentResults(records);
-      })
-      .catch(() => {
-        if (active) {
-          setError(true);
-          setAssessmentResults([]);
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [scenario]);
-  if (!submittedProfile)
+  if (catalogueStatus !== 'ready')
     return (
       <div className="container page">
-        <span className="eyebrow">Start with your story</span>
+        <h1>Scholarship results</h1>
+        <CatalogueState />
+        {submission && <p>Your previous submission is retained; it has not been replaced.</p>}
+      </div>
+    );
+  if (!submission)
+    return (
+      <div className="container page">
         <h1>Let’s get to know you first.</h1>
+        <ModeDisclosure
+          mode={catalogueLoad.mode}
+          coverage={catalogueLoad.coverage}
+          quarantined={catalogueLoad.quarantined}
+        />
         <StatePanel
           title="Your profile starts here."
-          icon="book"
-          action={
-            <Button to="/questionnaire">
-              Start the questionnaire <Icon name="arrow" />
-            </Button>
-          }
+          action={<Button to="/questionnaire">Start the questionnaire</Button>}
         >
           <p>
-            No submitted answers are available in this session. Refreshing the page clears your
-            profile and checklist.
+            No submitted answers are available in this session. Refreshing clears your profile and
+            checklist.
           </p>
         </StatePanel>
       </div>
     );
-  const potentialCount = assessmentResults.filter((s) => s.status === 'potential').length;
+  const { assessments, context, catalogueSnapshot: catalogue, profile } = submission;
+  const records = new Map(catalogue.schemes.map((record) => [record.id, record]));
+  const potential = assessments.filter((assessment) => assessment.status === 'potential').length;
+  const answered = [
+    ...Object.entries(profile),
+    ...Object.entries(profile.additionalAnswers || {}).map(([key, answer]) => [
+      `additionalAnswers.${key}`,
+      answer,
+    ]),
+  ].filter(
+    ([field, answer]) =>
+      field !== 'profileVersion' && field !== 'additionalAnswers' && answer.state !== 'not-asked',
+  );
   return (
     <div className="container page">
-      <Link to="/questionnaire" className="back-link">
-        <Icon name="arrow" size={16} />
+      <Link className="back-link" to="/questionnaire">
         Back to your answers
       </Link>
       <div className="results-heading">
         <div className="page-intro">
-          <span className="eyebrow">Your next chapter starts here</span>
+          <span className="eyebrow">Answer-driven discovery</span>
           <h1>Possibilities, with a little clarity.</h1>
-          <p>Explore how scholarship results will look. Every example below is fictional.</p>
+          <p>
+            {potential} potential {potential === 1 ? 'match' : 'matches'} among {assessments.length}{' '}
+            {context.mode === 'demo' ? 'fictional scholarships' : 'published scholarships'}.
+          </p>
         </div>
-        <span className="demo-stamp">
-          <span className="preview-dot" />
-          Demo preview
-        </span>
       </div>
-      <Notice title="A preview, not a personal eligibility decision.">
-        <p>
-          These prewritten examples do not depend on your answers. Real scholarship records and
-          eligibility matching arrive in later phases.
-        </p>
-      </Notice>
-      {stale && (
-        <div className="stale-notice">
-          <Notice tone="warning" title="Your answers have changed.">
-            <p>
-              This summary uses your last submitted profile.{' '}
-              <Link to="/questionnaire">Review and resubmit your answers</Link> before continuing.
-            </p>
-          </Notice>
-        </div>
+      <ModeDisclosure
+        mode={context.mode}
+        coverage={catalogue.coverage}
+        evaluatedAt={context.evaluatedAt}
+        quarantined={catalogue.coverage.quarantined}
+      />
+      <StaleNotice stale={stale} />
+      {catalogueLoad.catalogue.catalogueVersion !== catalogue.catalogueVersion && (
+        <Notice title="A newer catalogue is available.">
+          <p>
+            These are your previous results and record versions. Review and resubmit to use the new
+            catalogue.
+          </p>
+        </Notice>
       )}
       <div className="results-layout">
         <aside className="results-sidebar">
           <section className="profile-card">
-            <div className="profile-card__heading">
-              <span className="profile-avatar">
-                <Icon name="book" size={22} />
-              </span>
-              <div>
-                <h2>Your answer summary</h2>
-                <p>Kept in this session only</p>
-              </div>
-            </div>
+            <h2>Your submitted answers</h2>
             <dl>
-              {[
-                ['educationLevel', 'Study level'],
-                ['domicile', 'Domicile'],
-                ['income', 'Household income'],
-              ].map(([field, label]) => (
+              {answered.map(([field, answer]) => (
                 <div key={field}>
-                  <dt>{label}</dt>
-                  <dd>{answerLabel(submittedProfile, field)}</dd>
+                  <dt>{fieldLabels[field]}</dt>
+                  <dd>{formatAnswer(answer)}</dd>
                 </div>
               ))}
             </dl>
-            <Button to="/questionnaire" variant="secondary">
+            <Link className="text-link" to="/questionnaire">
               Edit answers
-              <Icon name="edit" size={15} />
+            </Link>
+            <p className="small muted">
+              Catalogue {context.catalogueVersion} · Engine {context.engineVersion}
+            </p>
+            <p className="small muted">Evaluated at {context.evaluatedAt}</p>
+            <Button variant="secondary" onClick={() => dispatch({ type: 'reset' })}>
+              Reset session
             </Button>
-          </section>
-          <section className="sidebar-note">
-            <Icon name="shield" size={24} />
-            <h2>Keep the full picture.</h2>
-            <p>
-              A potential match is guidance, not a promise of approval. Always check the official
-              guidelines.
-            </p>
-            <p>
-              Coverage in this preview: four fictional examples. No real scholarships have been
-              verified.
-            </p>
           </section>
         </aside>
         <div className="results-main">
-          <div className="results-toolbar">
-            <div aria-live="polite">
-              <strong>
-                {loading
-                  ? 'Loading examples…'
-                  : error
-                    ? 'Preview unavailable'
-                    : `${potentialCount} potential match example${potentialCount === 1 ? '' : 's'}`}
-              </strong>
-              <p>{assessmentResults.length} total examples · Not an exhaustive catalogue</p>
-            </div>
-            <div className="scenario-control">
-              <label htmlFor="scenario">Preview scenario</label>
-              <select
-                id="scenario"
-                value={scenario}
-                onChange={(e) => {
-                  setScenario(e.target.value);
-                  setFilter('all');
-                }}
-              >
-                <option value="complete">All result types</option>
-                <option value="empty">No results</option>
-                <option value="error">Unavailable catalogue</option>
-              </select>
-            </div>
-          </div>
-          <div className="result-filters" aria-label="Filter result examples">
-            <button onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>
-              All examples <span>{assessmentResults.length}</span>
+          {submission.mappingIssues.map((issue) => (
+            <Notice key={`${issue.field}:${issue.code}`} title="Answer needs clarification">
+              <p>{issue.message}</p>
+            </Notice>
+          ))}
+          <div className="result-filters" aria-label="Filter assessments">
+            <button aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>
+              All scholarships <span>{assessments.length}</span>
             </button>
             {assessmentGroups.map((group) => (
               <button
@@ -172,72 +128,38 @@ export default function Results() {
                 aria-pressed={filter === group.id}
                 onClick={() => setFilter(group.id)}
               >
-                {group.title}
-                <span>{assessmentResults.filter((s) => s.status === group.id).length}</span>
+                {group.title}{' '}
+                <span>{assessments.filter((item) => item.status === group.id).length}</span>
               </button>
             ))}
           </div>
-          {loading ? (
-            <div className="loading-state" role="status">
-              Loading demo examples…
-            </div>
-          ) : error ? (
-            <StatePanel
-              title="We couldn’t load the preview."
-              icon="info"
-              action={
-                <Button onClick={() => setScenario('complete')}>
-                  Try again
-                  <Icon name="arrow" />
-                </Button>
-              }
-            >
-              <p>
-                This scenario demonstrates a catalogue error. Your answers are still available. Try
-                again to restore the demo examples.
-              </p>
-            </StatePanel>
-          ) : assessmentResults.length === 0 ? (
-            <StatePanel
-              title="No results in this preview."
-              action={
-                <Button onClick={() => setScenario('complete')}>
-                  Restore demo examples
-                  <Icon name="arrow" />
-                </Button>
-              }
-            >
-              <p>
-                This demonstrates an empty catalogue result, not a lack of opportunities for you.
-                Review your answers or explore{' '}
-                <a href="https://www.myscheme.gov.in/" target="_blank" rel="noopener noreferrer">
-                  myScheme (opens in a new tab)
-                </a>
-                .
-              </p>
-            </StatePanel>
-          ) : (
-            <div className="result-groups">
-              {assessmentGroups
-                .filter((g) => filter === 'all' || filter === g.id)
-                .map((group) => (
-                  <section key={group.id} className="result-group" aria-label={group.title}>
+          <div className="result-groups">
+            {assessmentGroups
+              .filter((group) => filter === 'all' || filter === group.id)
+              .map((group) => {
+                const items = assessments.filter((assessment) => assessment.status === group.id);
+                return (
+                  <section className="result-group" key={group.id} aria-label={group.title}>
                     <div className="result-group__heading">
                       <h2>{group.title}</h2>
-                      <span>
-                        {assessmentResults.filter((s) => s.status === group.id).length} example
-                      </span>
+                      <span>{items.length} scholarships</span>
                     </div>
-                    {assessmentResults
-                      .filter((s) => s.status === group.id)
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((scheme) => (
-                        <SchemeCard scheme={scheme} key={scheme.id} />
-                      ))}
+                    {items.length ? (
+                      items.map((assessment) => (
+                        <SchemeCard
+                          key={assessment.schemeId}
+                          record={records.get(assessment.schemeId)}
+                          assessment={assessment}
+                          context={context}
+                        />
+                      ))
+                    ) : (
+                      <p>No assessments in this group.</p>
+                    )}
                   </section>
-                ))}
-            </div>
-          )}
+                );
+              })}
+          </div>
         </div>
       </div>
     </div>
