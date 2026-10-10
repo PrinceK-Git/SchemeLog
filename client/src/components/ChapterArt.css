@@ -1,0 +1,110 @@
+.chapter-art {
+  position: relative;
+  width: 260px;
+  height: 225px;
+  flex: 0 0 260px;
+  pointer-events: none;
+}
+.chapter-art__shape {
+  position: absolute;
+  inset: 20px 30px 18px 20px;
+  background: #3e645a;
+  border-radius: 48% 56% 40% 62%;
+  transform: rotate(-16deg);
+}
+.chapter-art__sun {
+  position: absolute;
+  right: 7px;
+  bottom: 20px;
+  width: 100px;
+  height: 130px;
+  border-radius: 50%;
+  background: #e8c888;
+  transform: rotate(22deg);
+}
+.chapter-art__paper {
+  position: absolute;
+  inset: 23px 55px 23px 59px;
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 18px #103b3512;
+  transform: rotate(-8deg);
+}
+.chapter-art__icon {
+  display: inline-flex;
+  padding: 8px;
+  border-radius: 8px;
+  color: white;
+  background: var(--green);
+  margin-bottom: 13px;
+}
+.chapter-art__rule {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-bottom: 7px;
+  background: var(--sage);
+}
+.chapter-art__rule--short {
+  width: 65%;
+  margin-bottom: 15px;
+}
+.chapter-art__check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 9px;
+  color: var(--green);
+}
+.chapter-art__check svg {
+  border-radius: 50%;
+  background: var(--mint);
+}
+.chapter-art__check i {
+  width: 65%;
+  height: 2px;
+  background: var(--border);
+}
+.chapter-art__sprig {
+  position: absolute;
+  width: 90px;
+  height: 162px;
+  left: -9px;
+  bottom: 0;
+  color: #90a183;
+  transform: rotate(-14deg);
+}
+.chapter-art__spark {
+  position: absolute;
+  right: 27px;
+  top: 0;
+  color: var(--gold);
+  font-size: 40px;
+}
+.chapter-art__label {
+  position: absolute;
+  right: 0;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #efcf8d;
+  color: var(--green-hover);
+  border-radius: 9px;
+  transform: rotate(7deg);
+  font-size: 12px;
+  box-shadow: var(--shadow-card);
+}
+.chapter-art--compact {
+  transform: scale(0.86);
+  transform-origin: right center;
+  height: 215px;
+}
+@media (max-width: 760px) {
+  .chapter-art {
+    display: none;
+  }
+}

@@ -60,7 +60,7 @@ export default function App() {
               Home
             </NavLink>
             <Link to="/#how-it-works">How it works</Link>
-            <Button to="/questionnaire" variant="secondary">
+            <Button to="/questionnaire">
               Get started <Icon name="arrow" size={16} />
             </Button>
           </nav>

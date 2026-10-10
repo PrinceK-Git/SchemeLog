@@ -4,6 +4,8 @@ import { useSession } from '../app/Session';
 import { assessmentGroups, formatAnswer } from '../presentation/scheme.js';
 import { fieldLabels } from '../data/questions.js';
 import SchemeCard from '../components/SchemeCard';
+import ChapterArt from '../components/ChapterArt';
+import Icon from '../components/Icon';
 import {
   Button,
   Notice,
@@ -66,12 +68,17 @@ export default function Results() {
       <div className="results-heading">
         <div className="page-intro">
           <span className="eyebrow">Answer-driven discovery</span>
-          <h1>Possibilities, with a little clarity.</h1>
+          <h1>
+            Possibilities, with
+            <br />
+            <em>a little clarity.</em>
+          </h1>
           <p>
             {potential} potential {potential === 1 ? 'match' : 'matches'} among {assessments.length}{' '}
             {context.mode === 'demo' ? 'fictional scholarships' : 'published scholarships'}.
           </p>
         </div>
+        <ChapterArt compact />
       </div>
       <ModeDisclosure
         mode={context.mode}
@@ -91,6 +98,9 @@ export default function Results() {
       <div className="results-layout">
         <aside className="results-sidebar">
           <section className="profile-card">
+            <span className="profile-card__bookmark" aria-hidden="true">
+              <Icon name="book" size={22} />
+            </span>
             <h2>Your submitted answers</h2>
             <dl>
               {answered.map(([field, answer]) => (
@@ -111,6 +121,11 @@ export default function Results() {
               Reset session
             </Button>
           </section>
+          <div className="sidebar-note">
+            <Icon name="leaf" size={24} />
+            <h2>One step at a time.</h2>
+            <p>Open a scholarship to understand its conditions and prepare for your next step.</p>
+          </div>
         </aside>
         <div className="results-main">
           {submission.mappingIssues.map((issue) => (

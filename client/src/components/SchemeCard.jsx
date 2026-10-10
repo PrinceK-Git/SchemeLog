@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Badge, RuleExplanation, SourceLink, AssessmentActions } from './UI';
 import { safeDestinations, presentFacts } from '../presentation/scheme.js';
+import Icon from './Icon';
 import './SchemeCard.css';
 
 export default function SchemeCard({ record, assessment, context }) {
@@ -9,6 +10,9 @@ export default function SchemeCard({ record, assessment, context }) {
   return (
     <article className="scheme-card" data-scheme-id={record.id}>
       <div className="scheme-card__top">
+        <span className="scheme-card__monogram" aria-hidden="true">
+          <Icon name="book" size={23} />
+        </span>
         <div>
           <span className="eyebrow">
             {context.mode === 'demo' ? 'Demo · Fictional scholarship' : 'Published scholarship'}
@@ -40,6 +44,7 @@ export default function SchemeCard({ record, assessment, context }) {
       <div className="scheme-card__actions">
         <Link className="text-link" to={`/scholarships/${record.slug}`}>
           View requirements
+          <Icon name="arrow" size={16} />
         </Link>
         {safeDestinations(record, context).map((destination) => (
           <SourceLink key={destination.id} destination={destination} compact />

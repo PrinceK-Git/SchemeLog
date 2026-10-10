@@ -18,6 +18,8 @@ import {
   AssessmentActions,
 } from '../components/UI';
 import NotFound from './NotFound';
+import ChapterArt from '../components/ChapterArt';
+import Icon from '../components/Icon';
 import './ScholarshipDetail.css';
 
 export default function ScholarshipDetail() {
@@ -72,6 +74,7 @@ export default function ScholarshipDetail() {
           <h1>{record.officialName}</h1>
           <p>Record version {record.recordVersion}</p>
         </div>
+        <ChapterArt compact />
       </div>
       <ModeDisclosure
         mode={mode}
@@ -206,6 +209,9 @@ export default function ScholarshipDetail() {
         </div>
         <aside className="detail-sidebar">
           <section className="application-card">
+            <span className="eyebrow">
+              <Icon name="book" size={18} /> Your next step
+            </span>
             <h2>Application information</h2>
             <dl>
               <div>
