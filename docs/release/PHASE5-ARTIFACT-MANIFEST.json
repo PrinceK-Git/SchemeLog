@@ -1,0 +1,88 @@
+{
+  "createdAt": "2026-10-10T12:48:17.890Z",
+  "baseCommit": "f598eb61bfd34bb85de3450df81b24b6948269b8",
+  "candidate": "Base commit with uncommitted Phase 5 test/documentation changes; runtime unchanged.",
+  "node": "v24.16.0",
+  "npm": "11.13.0",
+  "mode": "demo",
+  "catalogueVersion": "2026-10-10.1",
+  "demoCatalogueVersion": "demo-2026-10-10.1",
+  "engineVersion": "1.0.0",
+  "profileVersion": 1,
+  "evaluatedAt": "2026-10-10T12:00:00+05:30",
+  "publicationEvaluationDate": "2026-10-10",
+  "sourceSnapshotHashes": {},
+  "checks": {
+    "catalogueCopiesIdentical": true,
+    "realPublishedCount": 0,
+    "repeatedCatalogueBuilds": 2,
+    "artifactExclusionScan": "passed; targeted text scan plus production graph unit tests, not a comprehensive secret audit"
+  },
+  "files": [
+    {
+      "path": "package-lock.json",
+      "bytes": 253,
+      "sha256": "2263e9208fa553e8b8a8cd96cf0d9c36f5f9bc47bd8ccb29221be84ecfdfa619"
+    },
+    {
+      "path": "client/package-lock.json",
+      "bytes": 31965,
+      "sha256": "ec9d912bfeab4d98e9cd72b0a8b9ec599d39e3d24ba215bb3d0a1deec54035e4"
+    },
+    {
+      "path": "server/package-lock.json",
+      "bytes": 12602,
+      "sha256": "e0aebac59046a4d6745724cea395ee68e7e959cb82d0bb7ff5f1e32cad89f69b"
+    },
+    {
+      "path": "client/src/data/catalogue.json",
+      "bytes": 491,
+      "sha256": "250f8814e7c4df5a428178e1e34d6a153d6da8661e30c93baaecee8784328850"
+    },
+    {
+      "path": "server/src/data/catalogue.json",
+      "bytes": 491,
+      "sha256": "250f8814e7c4df5a428178e1e34d6a153d6da8661e30c93baaecee8784328850"
+    },
+    {
+      "path": "server/src/data/income-thresholds.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "server/src/data/release.json",
+      "bytes": 87,
+      "sha256": "ec757154496cb40c42c3d4844ed78d92fb682966386bcfbb87664b8f38e7d1ca"
+    },
+    {
+      "path": "server/sources/registry.json",
+      "bytes": 146,
+      "sha256": "98d4908ca13437da2f2c7f391e01fec9c5ee7f5a50db6d0a1c9a702a28064d66"
+    },
+    {
+      "path": "client/tests/journey/frontend.spec.js",
+      "bytes": 18829,
+      "sha256": "1d4b020d9d4646813fe10e8b86c977b35ce825782e5a08eb1cbec66995ab38fa"
+    },
+    {
+      "path": "client/dist/assets/index-DaBvH94M.js",
+      "bytes": 370407,
+      "sha256": "4f37a1a33b24f19aeec5aaba066c08738c74f2ec518f5e538b8faacb103a3495"
+    },
+    {
+      "path": "client/dist/assets/index-u2spNmk5.css",
+      "bytes": 25644,
+      "sha256": "2993d281fdd689ced896aea78633857b2389409cb523c5e9074f638014e0c35b"
+    },
+    {
+      "path": "client/dist/favicon.svg",
+      "bytes": 243,
+      "sha256": "da5bd14ffbc5e93b8948452ccd5f705312811e05216205c0a01af7d8fe2e57a0"
+    },
+    {
+      "path": "client/dist/index.html",
+      "bytes": 780,
+      "sha256": "c447dd8526f56976fa444356c220f0fbfd3dc2b457e01443691263d7259ee3b4"
+    }
+  ]
+}

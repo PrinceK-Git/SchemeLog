@@ -88,3 +88,7 @@ education level and annual income bands; unrelated sensitive questions are hidde
 marks results stale until resubmission. Checklist checkmarks never change eligibility.
 See [the Phase 4 handoff](docs/PHASE4-HANDOFF.md) for validation evidence and remaining release gates,
 and [research notes](docs/verification/) before publishing real records.
+
+See [the Phases 3–5 release handoff](docs/release/PHASES-3-5-RELEASE.md) for the latest local checks,
+browser verification status, artifact identity and deployment/rollback instructions. A fictional
+prototype, a reviewed-data release and a verified live deployment are separate outcomes.
