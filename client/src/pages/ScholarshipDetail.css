@@ -3,9 +3,15 @@
   gap: 1.2rem;
   align-items: center;
   margin-bottom: 1.7rem;
+  justify-content: space-between;
+}
+.detail-heading > div:first-child {
+  max-width: 790px;
+  min-width: 0;
 }
 .detail-heading h1 {
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 1.12;
   margin: 0.6rem 0;
 }
 .detail-heading p {
@@ -29,18 +35,22 @@
 .detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 3rem;
+  gap: 2rem;
   margin-top: 2rem;
 }
 .detail-section {
-  padding-block: 1.8rem;
-  border-bottom: 1px solid var(--border);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 1.25rem;
 }
 .detail-section:first-child {
-  padding-top: 0.5rem;
+  border-top: 3px solid var(--gold);
 }
 .detail-section h2 {
-  font-size: 1.55rem;
+  font-size: 1.85rem;
   margin: 0.6rem 0 1rem;
 }
 .detail-section > p {
@@ -96,8 +106,21 @@
   color: var(--green);
 }
 .checklist-item {
-  padding-block: 1.15rem;
-  border-bottom: 1px solid var(--border);
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 0.75rem;
+  background: #fafbf8;
+}
+.checklist-item:has(input:checked) {
+  background: var(--mint);
+  border-color: #91a795;
+}
+.checklist-item summary {
+  cursor: pointer;
+  padding-block: 0.65rem;
+  font-size: 0.8rem;
+  color: var(--green);
 }
 .checklist-item label {
   display: flex;
@@ -165,13 +188,20 @@
   margin: 0.3rem 0;
 }
 .application-card {
-  background: white;
+  background: var(--mint);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  border-top: 3px solid var(--green);
+}
+.application-card > .eyebrow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
 }
 .application-card h2 {
-  font-size: 1.35rem;
+  font-size: 1.65rem;
   margin: 0.8rem 0 1.3rem;
 }
 .application-card dl {
@@ -182,10 +212,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  border-top: 1px solid #d5dfd3;
+  padding-top: 0.8rem;
 }
 .application-card dt {
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
 }
 .application-card dd {
   font-size: 0.85rem;
@@ -201,9 +233,11 @@
   margin-top: 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: #f2eddc;
+  margin-bottom: 1rem;
 }
 .sources-card h2 {
-  font-size: 1rem;
+  font-size: 1.3rem;
   margin: 0 0 1rem;
 }
 .sources-card > div {
@@ -240,9 +274,9 @@
     border-radius: 10px;
   }
   .detail-heading h1 {
-    font-size: 1.75rem;
+    font-size: 2.3rem;
   }
   .detail-section {
-    padding-block: 1.5rem;
+    padding: 1.25rem;
   }
 }

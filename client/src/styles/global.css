@@ -84,12 +84,14 @@ h3 {
   letter-spacing: -0.035em;
 }
 h1 {
+  font-family: var(--font-display);
   font-size: clamp(2rem, 3.4vw, 3rem);
-  font-weight: 550;
+  font-weight: 400;
 }
 h2 {
+  font-family: var(--font-display);
   font-size: clamp(1.65rem, 2.4vw, 2.2rem);
-  font-weight: 500;
+  font-weight: 400;
 }
 p {
   margin: 0.8rem 0;
@@ -170,8 +172,8 @@ svg {
   align-items: flex-start;
   gap: 0.7rem;
   padding: 1rem 1.15rem;
-  border-radius: 9px;
-  background: #f2f4ed;
+  border-radius: 14px;
+  background: var(--mint);
   border: 1px solid var(--border);
   font-size: 0.8rem;
   color: #4b594f;
@@ -226,9 +228,10 @@ svg {
   border-radius: var(--radius);
   padding: 3rem 1.5rem;
   margin: 1.5rem 0;
+  box-shadow: var(--shadow-card);
 }
 .state-panel h2 {
-  font-size: 1.5rem;
+  font-size: 2rem;
 }
 .state-panel > div {
   color: var(--muted);

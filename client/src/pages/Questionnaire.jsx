@@ -4,6 +4,7 @@ import { useSession } from '../app/Session';
 import { answerLabel, fieldsFor, validateAnswers, visibleSections } from '../data/questions';
 import { Button, Notice, CatalogueState, ModeDisclosure } from '../components/UI';
 import Icon from '../components/Icon';
+import ChapterArt from '../components/ChapterArt';
 import './Questionnaire.css';
 
 function Field({ id, definition, value, error, onChange }) {
@@ -189,7 +190,7 @@ export default function Questionnaire() {
       </div>
     );
   return (
-    <div className="container page">
+    <div className="container page questionnaire-page">
       <Link to={submission ? '/results' : '/'} className="back-link">
         <Icon name="arrow" size={16} />
         {submission ? 'Back to results' : 'Back to home'}
@@ -234,6 +235,7 @@ export default function Questionnaire() {
               progress.
             </p>
           </div>
+          <ChapterArt />
         </aside>
         <div className="questionnaire-main">
           <div className="form-progress">
@@ -246,7 +248,7 @@ export default function Questionnaire() {
             <span style={{ width: `${((activeStep + 1) / (sections.length + 1)) * 100}%` }} />
           </div>
           <form className="questionnaire-card" onSubmit={submit} noValidate>
-            {Object.keys(errors).length > 0 && (
+            {Object.values(errors).some(Boolean) && (
               <div role="alert" tabIndex="-1" ref={errorSummary}>
                 <strong>Please check these answers.</strong>
                 <ul>

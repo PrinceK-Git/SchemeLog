@@ -3,6 +3,21 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.6rem;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 180ms,
+    box-shadow 180ms;
+}
+.scheme-card:hover {
+  border-color: #a5b9a7;
+  box-shadow: 0 12px 30px rgb(23 76 67 / 8%);
+}
+.scheme-card__top > div {
+  min-width: 0;
+}
+.scheme-card > p {
+  font-size: 0.93rem;
+  color: var(--muted);
 }
 .scheme-card__top {
   display: flex;
@@ -23,6 +38,9 @@
 .scheme-card h3 {
   margin: 0.25rem 0;
   font-size: 1.25rem;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  color: var(--green-hover);
 }
 .scheme-card h3 a {
   text-decoration: none;
@@ -42,10 +60,11 @@
 }
 .scheme-card__facts {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
+  background: #f7f8f3;
+  border-radius: 10px;
+  padding: 1rem;
   margin: 1.2rem 0;
 }
 .scheme-card__facts div {

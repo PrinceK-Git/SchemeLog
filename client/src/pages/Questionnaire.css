@@ -1,32 +1,31 @@
 .questionnaire-layout {
   display: grid;
-  grid-template-columns: 330px minmax(0, 640px);
-  gap: 4.5rem;
+  grid-template-columns: minmax(0, 380px) minmax(0, 660px);
+  gap: 4rem;
   justify-content: space-between;
 }
 .questionnaire-aside {
   padding-top: 0.8rem;
 }
 .questionnaire-aside h1 {
-  font-size: 2.2rem;
+  font-size: clamp(2.5rem, 3.4vw, 3.2rem);
   margin: 0.8rem 0 1rem;
-  line-height: 1.2;
+  line-height: 1.13;
+  color: var(--green-hover);
 }
 .questionnaire-aside h1 em {
-  font:
-    italic 2rem/1.2 Georgia,
-    serif;
+  font-size: inherit;
   color: var(--green);
 }
 
 .questionnaire-aside > p {
   color: var(--muted);
-  font-size: 0.87rem;
-  max-width: 260px;
+  font-size: 0.95rem;
+  max-width: 300px;
 }
 .stepper {
   list-style: none;
-  margin: 2.5rem 0;
+  margin: 2rem 0;
   padding: 0;
 }
 .stepper__item {
@@ -34,8 +33,8 @@
   gap: 1rem;
   align-items: center;
   position: relative;
-  min-height: 64px;
-  font-size: 0.83rem;
+  min-height: 58px;
+  font-size: 0.87rem;
   color: var(--muted);
 }
 .stepper__item:not(:last-child)::after {
@@ -43,8 +42,8 @@
   position: absolute;
   width: 1px;
   background: var(--border);
-  height: 28px;
-  top: 49px;
+  height: 22px;
+  top: 47px;
   left: 17px;
 }
 .stepper__number {
@@ -78,6 +77,12 @@
   border-top: 1px solid var(--border);
   max-width: 270px;
 }
+.questionnaire-aside .chapter-art {
+  margin: 1.8rem 0 0 1rem;
+}
+.questionnaire-main {
+  min-width: 0;
+}
 .questionnaire-aside__privacy p {
   font-size: 0.75rem;
   margin: 0;
@@ -95,29 +100,31 @@
 }
 .progress-track {
   background: #e8ece4;
-  height: 4px;
+  height: 5px;
   border-radius: 4px;
   margin-bottom: 1.5rem;
   overflow: hidden;
 }
 .progress-track span {
   display: block;
-  height: 4px;
+  height: 5px;
   background: var(--green);
 }
 .questionnaire-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2rem;
+  padding: 2.4rem;
   background: white;
+  box-shadow: var(--shadow-card);
+  border-top: 3px solid var(--gold);
 }
 .questionnaire-card h2 {
-  font-size: 1.8rem;
+  font-size: 2.15rem;
   margin: 0.65rem 0 0.7rem;
 }
 .questionnaire-card__intro {
   color: var(--muted);
-  font-size: 0.87rem;
+  font-size: 0.95rem;
   margin-bottom: 1.8rem;
 }
 .fields {
@@ -128,7 +135,7 @@
 .field legend {
   display: block;
   font-weight: 650;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin-bottom: 0.6rem;
   padding: 0;
 }
@@ -143,11 +150,21 @@
   width: 100%;
   min-height: 48px;
   border: 1px solid #b5c3b6;
-  background: white;
-  border-radius: 7px;
+  background: #fdfdfb;
+  border-radius: 9px;
   padding: 0.65rem 0.75rem;
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+}
+.field select:hover,
+.field input[type='number']:hover {
+  border-color: var(--green);
+}
+.field input:disabled {
+  background: var(--cream);
+}
+.field > select + .number-wrap {
+  margin-top: 0.6rem;
 }
 .field select {
   text-overflow: ellipsis;
@@ -191,14 +208,21 @@
 }
 .radio-option {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  min-height: 56px;
-  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  min-height: 66px;
+  padding: 0.9rem;
   display: flex;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.87rem;
   gap: 0.5rem;
   cursor: pointer;
+  transition:
+    border-color 150ms,
+    background 150ms;
+}
+.radio-option:hover {
+  border-color: #91a795;
+  background: var(--mint);
 }
 .radio-option input {
   accent-color: var(--green);
@@ -213,7 +237,8 @@
 }
 .radio-option--selected {
   border-color: var(--green);
-  background: #f0f6ee;
+  background: var(--mint);
+  box-shadow: inset 0 0 0 1px var(--green);
 }
 .radio-option--selected > svg {
   display: block;
@@ -278,10 +303,10 @@
     gap: 2rem;
   }
   .questionnaire-aside h1 {
-    font-size: 1.9rem;
+    font-size: 2.4rem;
   }
   .questionnaire-aside h1 em {
-    font-size: 1.8rem;
+    font-size: inherit;
   }
 }
 @media (max-width: 760px) {
@@ -290,10 +315,10 @@
     gap: 1.5rem;
   }
   .questionnaire-aside h1 {
-    font-size: 2rem;
+    font-size: 2.4rem;
   }
   .questionnaire-aside h1 em {
-    font-size: 1.9rem;
+    font-size: inherit;
   }
   .questionnaire-aside > p {
     max-width: none;
@@ -302,12 +327,14 @@
     display: flex;
     margin: 1rem 0 0;
     justify-content: space-between;
-    gap: 0.2rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
   .stepper__item {
+    flex: 1 1 48px;
     flex-direction: column;
     min-height: auto;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     gap: 0.4rem;
     text-align: center;
   }

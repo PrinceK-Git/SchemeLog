@@ -1,9 +1,13 @@
 import { Button, StatePanel } from '../components/UI';
 import Icon from '../components/Icon';
+import ChapterArt from '../components/ChapterArt';
 
 export default function NotFound() {
   return (
     <div className="container page">
+      <div className="recovery-art">
+        <ChapterArt />
+      </div>
       <span className="eyebrow">A small detour</span>
       <h1>We couldn’t find that page.</h1>
       <StatePanel

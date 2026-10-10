@@ -2,10 +2,15 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: flex-start;
+  align-items: center;
+  padding-bottom: 1.5rem;
 }
 .results-heading .page-intro h1 {
-  font-size: clamp(2rem, 3vw, 2.7rem);
+  font-size: clamp(2.5rem, 4.5vw, 3.8rem);
+  line-height: 1.08;
+}
+.results-heading .page-intro {
+  margin-bottom: 0;
 }
 .demo-stamp {
   white-space: nowrap;
@@ -27,8 +32,18 @@
 .profile-card {
   background: white;
   border: 1px solid var(--border);
-  padding: 1.35rem;
+  padding: 1.5rem;
   border-radius: var(--radius);
+  border-top: 3px solid var(--gold);
+  box-shadow: var(--shadow-card);
+}
+.profile-card__bookmark {
+  display: inline-flex;
+  background: var(--mint);
+  color: var(--green);
+  padding: 0.65rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
 }
 .profile-card__heading {
   display: flex;
@@ -43,7 +58,7 @@
   padding: 0.65rem;
 }
 .profile-card h2 {
-  font-size: 0.85rem;
+  font-size: 1.45rem;
   margin: 0;
 }
 .profile-card__heading p {
@@ -59,7 +74,7 @@
   margin-block: 1.2rem;
 }
 .profile-card dt {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   color: var(--muted);
 }
 .profile-card dd {
@@ -72,18 +87,21 @@
   width: 100%;
 }
 .sidebar-note {
-  padding: 1.5rem 0.7rem;
+  padding: 1.5rem;
+  background: var(--sage);
+  border-radius: var(--radius);
+  margin-top: 1rem;
 }
 .sidebar-note svg {
   color: var(--green);
 }
 .sidebar-note h2 {
-  font-size: 0.95rem;
+  font-size: 1.4rem;
   margin: 0.8rem 0 0.5rem;
 }
 .sidebar-note p {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--green-hover);
 }
 .results-toolbar {
   display: flex;
@@ -121,20 +139,23 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  padding: 1.2rem 0;
+  padding: 0 0 1.4rem;
   border-bottom: 1px solid var(--border);
 }
 .result-filters button {
   border: 1px solid var(--border);
   background: white;
   color: var(--muted);
-  border-radius: 6px;
+  border-radius: 24px;
   min-height: 44px;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.69rem;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.78rem;
   display: inline-flex;
   gap: 0.6rem;
   align-items: center;
+}
+.result-filters button:hover {
+  border-color: var(--green);
 }
 .result-filters button[aria-pressed='true'] {
   border-color: var(--green);
@@ -142,7 +163,13 @@
   background: var(--green);
 }
 .result-filters button span {
-  opacity: 0.85;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--green);
+  min-width: 22px;
+  min-height: 22px;
+  display: grid;
+  place-items: center;
 }
 .result-groups {
   display: grid;
@@ -157,14 +184,24 @@
   gap: 0.7rem;
 }
 .result-group__heading h2 {
-  font-size: 0.85rem;
+  font-size: 1.55rem;
   letter-spacing: 0;
   margin: 0;
 }
 .result-group__heading > span {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   color: var(--muted);
   flex-shrink: 0;
+}
+.result-group > .scheme-card + .scheme-card {
+  margin-top: 1rem;
+}
+.result-group > p {
+  padding: 1.25rem;
+  border: 1px dashed #b5c3b6;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 .stale-notice {
   margin-top: 1rem;
@@ -196,7 +233,7 @@
     display: none;
   }
   .profile-card dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
   }
   .profile-card dd {
