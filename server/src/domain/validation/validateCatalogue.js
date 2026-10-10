@@ -3,8 +3,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { loadVocabularies, FIELD_VOCABULARY, NUMERIC_FIELDS, SCORE_FIELDS } from './vocab.js';
-import { ADDITIONAL_FIELDS, PROFILE_FIELDS, isDeclaredField } from '../../data/question-fields.js';
+import { loadVocabularies } from './vocab.js';
+import { validateRule, OPERATORS } from '../../../../client/src/domain/validation/rules.js';
+import { isReviewDue } from '../../../../client/src/domain/freshness.js';
+import { PROFILE_FIELDS } from '../../data/question-fields.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SCHEMA_DIR = join(here, 'schema');
@@ -14,21 +16,7 @@ export const schemeSchema = readSchema('scheme.schema.json');
 export const catalogueSchema = readSchema('catalogue.schema.json');
 export const registrySchema = readSchema('registry.schema.json');
 
-/** The closed operator set (§8). */
-export const OPERATORS = new Set([
-  'eq',
-  'in',
-  'lte',
-  'lt',
-  'gte',
-  'gt',
-  'between',
-  'allOf',
-  'anyOf',
-  'not',
-  'manualVerification',
-]);
-const COMPARISON = new Set(['lte', 'lt', 'gte', 'gt']);
+export { OPERATORS };
 const BRANCHES = new Set(['allOf', 'anyOf']);
 
 function buildAjv() {
@@ -218,153 +206,11 @@ function referentialLayer(record, vocab, findings) {
 /* ----------------------------------------------------- layer 3: semantic */
 
 function semanticRules(record, vocab, push) {
-  for (const [tree, treePath] of recordRuleTrees(record)) {
-    for (const [node, path] of walkRule(tree, treePath)) {
-      const { operator, field } = node;
-      if (!OPERATORS.has(operator)) {
-        push(
-          'reject',
-          'unknown-operator',
-          `${path}.operator`,
-          `Operator "${operator}" is not supported.`,
-        );
-        continue;
-      }
-      if (BRANCHES.has(operator)) {
-        if (!Array.isArray(node.children) || node.children.length < 2)
-          push(
-            'reject',
-            'branch-arity',
-            `${path}.children`,
-            `"${operator}" needs at least 2 children; found ${node.children?.length ?? 0}.`,
-          );
-        continue;
-      }
-      if (operator === 'not') {
-        if (!node.child)
-          push('reject', 'branch-arity', `${path}.child`, '"not" needs exactly one child.');
-        continue;
-      }
-      if (operator === 'manualVerification') {
-        if (!node.reason || !node.checkHint)
-          push(
-            'reject',
-            'manual-node',
-            path,
-            'manualVerification needs both "reason" and "checkHint" so the student knows what to check.',
-          );
-        continue;
-      }
-
-      // Leaf comparison operators need a declared field.
-      if (!field) {
-        push('reject', 'unknown-field', path, `Operator "${operator}" needs a "field".`);
-        continue;
-      }
-      if (!isDeclaredField(field)) {
-        push(
-          'reject',
-          'unknown-field',
-          `${path}.field`,
-          `Field "${field}" is not declared in question-fields.js.`,
-        );
-        continue;
-      }
-
-      const vocabularyName = FIELD_VOCABULARY[field];
-      const additionalKey = field.startsWith('additionalAnswers.')
-        ? field.slice('additionalAnswers.'.length)
-        : null;
-      const allowedValues = additionalKey ? ADDITIONAL_FIELDS[additionalKey].values : null;
-
-      if (operator === 'eq' || operator === 'in') {
-        const values = operator === 'in' ? node.value : [node.value];
-        if (operator === 'in' && (!Array.isArray(node.value) || node.value.length === 0)) {
-          push('reject', 'rule-shape', `${path}.value`, '"in" needs a non-empty array of codes.');
-          continue;
-        }
-        for (const value of values) {
-          if (vocabularyName && !vocab.codes[vocabularyName]?.has(value))
-            push(
-              'reject',
-              'vocab-code',
-              `${path}.value`,
-              `Code "${value}" is not in ${vocabularyName}.json.`,
-            );
-          if (allowedValues && !allowedValues.includes(value))
-            push(
-              'reject',
-              'vocab-code',
-              `${path}.value`,
-              `Value "${value}" is not declared for additionalAnswers.${additionalKey}.`,
-            );
-          if (!vocabularyName && !allowedValues && NUMERIC_FIELDS.has(field))
-            push(
-              'reject',
-              'rule-shape',
-              `${path}.operator`,
-              `"${operator}" cannot be used on the numeric field "${field}".`,
-            );
-        }
-        continue;
-      }
-
-      if (COMPARISON.has(operator) || operator === 'between') {
-        if (!NUMERIC_FIELDS.has(field)) {
-          push(
-            'reject',
-            'rule-shape',
-            `${path}.operator`,
-            `"${operator}" only applies to numeric fields; "${field}" is a code field.`,
-          );
-          continue;
-        }
-        if (operator === 'between') {
-          if (typeof node.min !== 'number' || typeof node.max !== 'number')
-            push('reject', 'rule-shape', path, '"between" needs numeric "min" and "max".');
-          else if (node.min > node.max)
-            push(
-              'reject',
-              'rule-shape',
-              path,
-              `"between" has min ${node.min} greater than max ${node.max}.`,
-            );
-          if (typeof node.minInclusive !== 'boolean' || typeof node.maxInclusive !== 'boolean')
-            push(
-              'reject',
-              'rule-shape',
-              path,
-              '"between" needs explicit minInclusive and maxInclusive.',
-            );
-        } else if (typeof node.value !== 'number') {
-          push('reject', 'rule-shape', `${path}.value`, `"${operator}" needs a numeric value.`);
-        }
-        if (SCORE_FIELDS.has(field)) {
-          if (!node.scale || !node.context)
-            push(
-              'reject',
-              'score-scale-context',
-              path,
-              'A score rule must declare both "scale" and "context"; otherwise it is not comparable.',
-            );
-          if (node.scale && !vocab.codes['score-scales'].has(node.scale))
-            push('reject', 'vocab-code', `${path}.scale`, `Unknown score scale "${node.scale}".`);
-          if (node.context && !vocab.codes['exam-contexts'].has(node.context))
-            push(
-              'reject',
-              'vocab-code',
-              `${path}.context`,
-              `Unknown exam context "${node.context}".`,
-            );
-        }
-        if (field === 'annualHouseholdIncome' && node.unit !== 'INR/year')
-          push(
-            'reject',
-            'rule-shape',
-            `${path}.unit`,
-            'An income rule must declare unit "INR/year" so no currency or period is assumed.',
-          );
-      }
+  const seenIds = new Set();
+  for (const [tree, path] of recordRuleTrees(record)) {
+    for (const issue of validateRule(tree, { vocab, path, seenIds }).errors) {
+      // Identifier duplicates retain their existing referential-layer finding.
+      if (issue.code !== 'duplicate-id') push('reject', issue.code, issue.path, issue.message);
     }
   }
 }
@@ -512,7 +358,7 @@ function semanticContent(record, push) {
 function semanticFreshness(record, options, push) {
   const checkFreshness = (freshness, path) => {
     if (!freshness?.reviewDue) return;
-    if (freshness.reviewDue < options.evaluatedAt)
+    if (isReviewDue(freshness.reviewDue, options.evaluatedAt))
       push(
         'warn',
         'review-due-passed',
