@@ -1,0 +1,14 @@
+:root {
+  --green: #164e45;
+  --green-hover: #0c3c34;
+  --text: #202e2a;
+  --muted: #5e6c64;
+  --surface: #ffffff;
+  --background: #fafbf8;
+  --cream: #f4f3e9;
+  --mint: #eaf2e9;
+  --border: #dfe5dc;
+  --radius: 14px;
+  --width: 1120px;
+  --font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

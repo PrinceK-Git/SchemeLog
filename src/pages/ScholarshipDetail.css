@@ -1,0 +1,248 @@
+.detail-heading {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  margin-bottom: 1.7rem;
+}
+.detail-heading h1 {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  margin: 0.6rem 0;
+}
+.detail-heading p {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+.detail-monogram {
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-width: 75px;
+  height: 75px;
+  font:
+    1.7rem Georgia,
+    serif;
+  color: var(--green);
+}
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+.detail-section {
+  padding-block: 1.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.detail-section:first-child {
+  padding-top: 0.5rem;
+}
+.detail-section h2 {
+  font-size: 1.55rem;
+  margin: 0.6rem 0 1rem;
+}
+.detail-section > p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.benefit-box {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: var(--mint);
+  padding: 1.3rem;
+  border-radius: 10px;
+  margin-top: 1.4rem;
+  color: var(--green);
+}
+.benefit-box div {
+  display: grid;
+  gap: 0.2rem;
+}
+.benefit-box div > span:last-child {
+  font-size: 0.75rem;
+}
+.detail-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.detail-section__heading h2 {
+  margin: 0;
+}
+.detail-subheading {
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+}
+.condition-list {
+  font-size: 0.85rem;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+.condition-list li {
+  margin-bottom: 0.5rem;
+}
+.checklist-count {
+  border-bottom: 1px solid var(--border);
+  margin-top: 1.5rem;
+  padding-bottom: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--green);
+}
+.checklist-item {
+  padding-block: 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+.checklist-item label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+.checklist-item input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green);
+  margin: 0.2rem 0 0;
+  flex-shrink: 0;
+}
+.checklist-item label > span {
+  display: grid;
+  gap: 0.25rem;
+}
+.checklist-item strong {
+  font-size: 0.9rem;
+}
+.checklist-item__action {
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+.checklist-item__info {
+  padding-left: 2rem;
+  margin-top: 0.6rem;
+}
+.checklist-item__info p {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.4rem 0 0;
+}
+.requirement-tag {
+  display: inline-block;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.45rem;
+  color: var(--muted);
+}
+.requirement-tag--conditional {
+  background: #fbf0d9;
+  color: #755015;
+  border-color: #edddb8;
+}
+.application-steps {
+  padding-left: 1.3rem;
+  font-size: 0.87rem;
+}
+.application-steps li {
+  padding-left: 0.4rem;
+  margin: 1.2rem 0;
+}
+.application-steps li::marker {
+  color: var(--green);
+  font-weight: 700;
+}
+.application-steps p {
+  font-size: 0.83rem;
+  color: var(--muted);
+  margin: 0.3rem 0;
+}
+.application-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.application-card h2 {
+  font-size: 1.35rem;
+  margin: 0.8rem 0 1.3rem;
+}
+.application-card dl {
+  display: grid;
+  gap: 1rem;
+}
+.application-card dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.application-card dt {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.application-card dd {
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 600;
+}
+.application-card .button {
+  width: 100%;
+  margin-top: 0.8rem;
+}
+.sources-card {
+  padding: 1.4rem;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sources-card h2 {
+  font-size: 1rem;
+  margin: 0 0 1rem;
+}
+.sources-card > div {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.8rem 0;
+}
+.sources-card > div > span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.sources-card > div > strong {
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+@media (max-width: 850px) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 1fr) 265px;
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 700px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .detail-heading {
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .detail-monogram {
+    min-width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+  }
+  .detail-heading h1 {
+    font-size: 1.75rem;
+  }
+  .detail-section {
+    padding-block: 1.5rem;
+  }
+}

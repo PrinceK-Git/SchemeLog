@@ -1,0 +1,139 @@
+.scheme-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+}
+.scheme-card__top {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.scheme-card__monogram {
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  color: var(--green);
+  border-radius: 12px;
+  min-width: 48px;
+  height: 48px;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+}
+.scheme-card h3 {
+  margin: 0.25rem 0;
+  font-size: 1.25rem;
+}
+.scheme-card h3 a {
+  text-decoration: none;
+}
+.scheme-card h3 a:hover {
+  text-decoration: underline;
+}
+.scheme-card__top p {
+  margin: 0.3rem 0 0;
+}
+.scheme-card__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.2rem 0 0.7rem;
+}
+.scheme-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  margin: 1.2rem 0;
+}
+.scheme-card__facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.fact-label {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: var(--muted);
+}
+.scheme-card__facts strong {
+  font-size: 0.85rem;
+}
+.scheme-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.source-note {
+  font-size: 0.71rem;
+  color: var(--muted);
+  margin: 0.8rem 0 0;
+}
+.explanation summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.explanation[open] summary svg {
+  transform: rotate(90deg);
+}
+.rule-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+}
+.rule-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+.rule-list p {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.rule-list strong {
+  font-size: 0.85rem;
+}
+.rule-symbol {
+  border-radius: 50%;
+  padding: 0.3rem;
+  display: inline-flex;
+  background: var(--cream);
+}
+.rule-symbol--pass {
+  color: var(--green);
+  background: var(--mint);
+}
+.rule-symbol--fail {
+  color: #923b39;
+  background: #faeeeb;
+}
+.rule-state {
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.rule-explanation > p {
+  font-size: 0.87rem;
+}
+@media (max-width: 420px) {
+  .scheme-card {
+    padding: 1.1rem;
+  }
+  .scheme-card__facts {
+    grid-template-columns: 1fr;
+  }
+}
