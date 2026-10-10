@@ -84,7 +84,7 @@ make no requests until a reviewed registry change is added. Raw bytes remain in 
 
 Answers remain in React memory; there are no accounts, analytics, uploads or profile network requests.
 Questionnaire submission uses strict version-1 profile normalization. The active demo asks only for
-education level and annual income bands; unrelated sensitive questions are hidden. Editing answers
+education level, domicile state/UT, annual income bands and category; unrelated questions are hidden. Editing answers
 marks results stale until resubmission. Checklist checkmarks never change eligibility.
 See [the Phase 4 handoff](docs/PHASE4-HANDOFF.md) for validation evidence and remaining release gates,
 and [research notes](docs/verification/) before publishing real records.
@@ -92,3 +92,15 @@ and [research notes](docs/verification/) before publishing real records.
 See [the Phases 3–5 release handoff](docs/release/PHASES-3-5-RELEASE.md) for the latest local checks,
 browser verification status, artifact identity and deployment/rollback instructions. A fictional
 prototype, a reviewed-data release and a verified live deployment are separate outcomes.
+
+The restored state/category controls use the server-owned vocabulary codes and shared profile
+validation, not a separate API. Learning Pathways now demonstrates fictional Assam/Bihar and
+General/OBC conditions; these are not real government requirements. See
+[state/category integration notes](docs/STATE-CATEGORY-INTEGRATION.md) for the current flow and checks.
+The Phase 5 release notes and artifact manifest describe the older `demo-2026-10-10.1` snapshot,
+not the updated build.
+
+Catalogue-driven question visibility is covered in
+[the visibility investigation](docs/QUESTIONNAIRE-VISIBILITY-INVESTIGATION.md). Planned course,
+study-stage and score controls remain available when parent answers are unknown; unrelated fields
+stay hidden. Broader control coverage uses isolated test catalogues, not additional shipped rules.

@@ -15,11 +15,17 @@ async function accessibility(page) {
 const card = (page, name) =>
   page.locator('.scheme-card').filter({ has: page.getByRole('heading', { name, exact: true }) });
 const learning = 'Learning Pathways Demo Scholarship';
+const personalAnswerPattern =
+  /undergraduate|annualHouseholdIncome|250000|draftProfile|domicileState|category|IN-AS|IN-BR|IN-MH|Assam|Bihar|Maharashtra|general|\bobc\b/i;
+const displayedAnswer = (container, label) =>
+  container.getByText(label, { exact: true }).locator('..').locator('dd');
 async function profile(page, income = 'middle', level = 'Undergraduate degree') {
   await page.goto('/questionnaire');
   await page.getByRole('radio', { name: level, exact: true }).check();
-  await expect(page.getByLabel('State or union territory of domicile')).toHaveCount(0);
+  await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveCount(0);
   await expect(page.getByLabel('Category', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Home state / domicile', { exact: true }).selectOption('IN-AS');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   const select = page.getByLabel('Annual household income', { exact: true });
   if (income === 'declined') await select.selectOption('declined');
@@ -36,6 +42,8 @@ async function profile(page, income = 'middle', level = 'Undergraduate degree') 
     await select.selectOption({ label });
   }
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Category', { exact: true }).selectOption('general');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Does everything look right?' })).toBeVisible();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
   await expect(page.locator('.scheme-card')).toHaveCount(4);
@@ -51,10 +59,7 @@ test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy'
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => consoleMessages.push(message.text()));
   page.on('request', (request) => {
-    if (
-      request.method() !== 'GET' ||
-      /undergraduate|annualHouseholdIncome|250000|draftProfile/.test(request.url())
-    )
+    if (request.method() !== 'GET' || personalAnswerPattern.test(request.url()))
       personalRequests.push(request.url());
     if (!request.url().startsWith('http://127.0.0.1:4173/')) externalRequests.push(request.url());
   });
@@ -93,6 +98,8 @@ test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy'
   await accessibility(page);
   await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveValue('IN-AS');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   const select = page.getByLabel('Annual household income', { exact: true });
   const label = (await select.locator('option').allTextContents()).find(
     (text) => /^Above/.test(text) && !/up to/i.test(text),
@@ -103,6 +110,9 @@ test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy'
   await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
   await page.getByRole('link', { name: 'Review and resubmit your answers' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Category', { exact: true })).toHaveValue('general');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
   await expect(card(page, learning).locator('.badge')).toHaveText(
@@ -119,11 +129,143 @@ test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy'
   ).toEqual({ local: 0, session: 0, cookie: '' });
   expect(externalRequests).toEqual([]);
   expect(personalRequests).toEqual([]);
-  expect(consoleMessages.join(' ')).not.toMatch(
-    /undergraduate|annualHouseholdIncome|250000|draftProfile/,
-  );
+  expect(consoleMessages.join(' ')).not.toMatch(personalAnswerPattern);
   expect(pageErrors).toEqual([]);
 });
+
+test('domicile and category conditions preserve labels, edits and submitted results until resubmission', async ({
+  page,
+}) => {
+  await profile(page);
+  await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
+  const submitted = page.locator('.profile-card');
+  const review = page.locator('.answer-review');
+  await expect(displayedAnswer(submitted, 'Home state / domicile')).toHaveText('Assam');
+  await expect(displayedAnswer(submitted, 'Category')).toHaveText('General');
+  let previousDomicile = 'IN-AS';
+  let previousCategory = 'general';
+  for (const [
+    domicile,
+    domicileLabel,
+    category,
+    reviewCategoryLabel,
+    resultCategoryLabel,
+    status,
+  ] of [
+    ['IN-BR', 'Bihar', 'general', 'General', 'General', 'Potential match'],
+    ['IN-MH', 'Maharashtra', 'general', 'General', 'General', 'Does not meet a known condition'],
+    [
+      'IN-AS',
+      'Assam',
+      'obc',
+      'Other Backward Class (OBC)',
+      'Other Backward Class',
+      'Potential match',
+    ],
+    [
+      'IN-AS',
+      'Assam',
+      'sc',
+      'Scheduled Caste (SC)',
+      'Scheduled Caste',
+      'Does not meet a known condition',
+    ],
+  ]) {
+    await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
+    await expect(
+      page.getByRole('radio', { name: 'Undergraduate degree', exact: true }),
+    ).toBeChecked();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveValue(
+      previousDomicile,
+    );
+    await page.getByLabel('Home state / domicile', { exact: true }).selectOption(domicile);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByLabel('Annual household income', { exact: true })).not.toHaveValue('');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByLabel('Category', { exact: true })).toHaveValue(previousCategory);
+    await page.getByLabel('Category', { exact: true }).selectOption(category);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(displayedAnswer(review, 'Home state / domicile')).toHaveText(domicileLabel);
+    await expect(displayedAnswer(review, 'Category')).toHaveText(reviewCategoryLabel);
+    if (domicile === 'IN-BR') {
+      await page.getByRole('button', { name: 'Edit domicile answers', exact: true }).click();
+      await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveValue('IN-BR');
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await page.getByRole('button', { name: 'Edit other details answers', exact: true }).click();
+      await expect(page.getByLabel('Category', { exact: true })).toHaveValue('general');
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await accessibility(page);
+    }
+    if (domicile === 'IN-MH' || category === 'sc') {
+      await page.getByRole('link', { name: 'Back to results', exact: true }).click();
+      await expect(page.getByText('Your answers have changed.', { exact: true })).toBeVisible();
+      await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
+      await expect(displayedAnswer(submitted, 'Home state / domicile')).toHaveText(
+        domicile === 'IN-MH' ? 'Bihar' : 'Assam',
+      );
+      await expect(displayedAnswer(submitted, 'Category')).toHaveText(
+        category === 'sc' ? 'Other Backward Class' : 'General',
+      );
+      await page.getByRole('link', { name: 'Review and resubmit your answers' }).click();
+      for (let step = 0; step < 4; step += 1)
+        await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await expect(displayedAnswer(review, 'Home state / domicile')).toHaveText(domicileLabel);
+      await expect(displayedAnswer(review, 'Category')).toHaveText(reviewCategoryLabel);
+    }
+    await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+    await expect(card(page, learning).locator('.badge')).toHaveText(status);
+    await expect(displayedAnswer(submitted, 'Home state / domicile')).toHaveText(domicileLabel);
+    await expect(displayedAnswer(submitted, 'Category')).toHaveText(resultCategoryLabel);
+    await expect(page.getByText('Your answers have changed.', { exact: true })).toHaveCount(0);
+    await expect(card(page, 'Next Chapter Demo Grant').locator('.badge')).toHaveText(
+      'Needs verification',
+    );
+    await expect(card(page, 'New Horizons Demo Award').locator('.badge')).toHaveText(
+      'Does not meet a known condition',
+    );
+    await expect(card(page, 'Future Notice Demo Scholarship').locator('.badge')).toHaveText(
+      'Information unavailable',
+    );
+    previousDomicile = domicile;
+    previousCategory = category;
+  }
+});
+
+for (const field of ['Home state / domicile', 'Category']) {
+  for (const [value, reviewLabel, resultLabel] of [
+    ['', 'Not answered', 'Not sure'],
+    ['unknown', "I'm not sure", 'Not sure'],
+    ['declined', 'Prefer not to answer', 'Prefer not to answer'],
+  ]) {
+    test(`${field}: ${value || 'blank'} stays uncertain rather than becoming ineligible`, async ({
+      page,
+    }) => {
+      await profile(page);
+      await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      if (field === 'Home state / domicile')
+        await page.getByLabel(field, { exact: true }).selectOption(value);
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      if (field === 'Category') await page.getByLabel(field, { exact: true }).selectOption(value);
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      await expect(displayedAnswer(page.locator('.answer-review'), field)).toHaveText(reviewLabel);
+      await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+      await expect(card(page, learning).locator('.badge')).toHaveText('Needs verification');
+      await expect(displayedAnswer(page.locator('.profile-card'), field)).toHaveText(resultLabel);
+      await page.getByRole('link', { name: 'Edit answers', exact: true }).first().click();
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      if (field === 'Category') {
+        await page.getByRole('button', { name: 'Continue', exact: true }).click();
+        await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      }
+      await expect(page.getByLabel(field, { exact: true })).toHaveValue(value);
+    });
+  }
+}
 
 test('honest uncertainty, manual alternatives, conditional documents and unknown dates', async ({
   page,
@@ -163,15 +305,18 @@ test('preparation persists in memory, applicability changes and direct routes re
   for (const link of await page.locator('a[target="_blank"]').all()) {
     expect(await link.getAttribute('rel')).toBe('noopener noreferrer');
     expect(await link.getAttribute('href')).not.toMatch(/income|undergraduate|profile|\?/);
+    expect(await link.getAttribute('href')).not.toMatch(personalAnswerPattern);
   }
   await page.getByRole('link', { name: 'Back to results' }).click();
   await page.getByRole('link', { name: 'Edit answers', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   const select = page.getByLabel('Annual household income', { exact: true });
   const label = (await select.locator('option').allTextContents()).find(
     (text) => /^Above/.test(text) && /up to/i.test(text),
   );
   await select.selectOption({ label });
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
   await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
@@ -210,10 +355,16 @@ test('reset clears a marked preparation task even after resubmitting the same pr
   ).not.toBeChecked();
   await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveValue('');
+  await page.getByLabel('Home state / domicile', { exact: true }).selectOption('IN-AS');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByLabel('Annual household income', { exact: true })).toHaveValue('');
   await page
     .getByLabel('Annual household income', { exact: true })
     .selectOption('income-closed-0-100000');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Category', { exact: true })).toHaveValue('');
+  await page.getByLabel('Category', { exact: true }).selectOption('general');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
   await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
@@ -228,6 +379,8 @@ test('unknown answers, filters, school reset and responsive landing regressions'
   page,
 }) => {
   await page.goto('/questionnaire');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
@@ -294,9 +447,13 @@ test('isolated strict income boundaries and score companions never invent certai
   await page.getByLabel('Isolated test scenario').selectOption('strict');
   await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Home state / domicile', { exact: true }).selectOption('IN-AS');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
     .getByLabel('Annual household income', { exact: true })
     .selectOption('income-open-100000-250000');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Category', { exact: true }).selectOption('general');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Show My Scholarships' }).click();
   await expect(card(page, learning).locator('.badge')).toHaveText('Needs verification');
@@ -310,10 +467,13 @@ test('isolated strict income boundaries and score companions never invent certai
   await page.getByLabel('Total course duration in years', { exact: true }).fill('3');
   await page.getByLabel('Current year of study', { exact: true }).selectOption('Year 2');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Home state / domicile', { exact: true }).selectOption('IN-AS');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
     .getByLabel('Annual household income', { exact: true })
     .selectOption('income-closed-0-100000');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Category', { exact: true }).selectOption('general');
   await page.getByLabel('Examination score format', { exact: true }).selectOption('cgpa');
   await page.getByLabel('CGPA scale', { exact: true }).selectOption('cgpa-4');
   await page
@@ -338,6 +498,7 @@ test('isolated strict income boundaries and score companions never invent certai
   await expect(page.getByLabel('Current school class', { exact: true })).toHaveValue('');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByLabel('Examination score format', { exact: true })).toHaveValue('');
 });
 
@@ -349,10 +510,25 @@ test('keyboard activation completes the minimal questionnaire with focused step 
   await page.keyboard.press('Space');
   await page.getByRole('button', { name: 'Continue', exact: true }).focus();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Where is your home state?' })).toBeFocused();
+  await page.getByLabel('Home state / domicile', { exact: true }).focus();
+  await page.keyboard.press('a');
+  await page.keyboard.press('s');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Home state / domicile', { exact: true })).toHaveValue('IN-AS');
+  await page.getByRole('button', { name: 'Continue', exact: true }).focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'A little about your household.' })).toBeFocused();
   await page.getByLabel('Annual household income', { exact: true }).focus();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Tab');
+  await page.getByRole('button', { name: 'Continue', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Just a few more details.' })).toBeFocused();
+  await page.getByLabel('Category', { exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Category', { exact: true })).toHaveValue('general');
   await page.getByRole('button', { name: 'Continue', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Does everything look right?' })).toBeFocused();

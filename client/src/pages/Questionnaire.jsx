@@ -7,6 +7,11 @@ import Icon from '../components/Icon';
 import './Questionnaire.css';
 
 function Field({ id, definition, value, error, onChange }) {
+  const answerStatus = ['unknown', 'unsure', 'declined'].includes(value)
+    ? value === 'unsure'
+      ? 'unknown'
+      : value
+    : 'known';
   const hintId = `${id}-hint`;
   const describedBy =
     [definition.hint && hintId, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
@@ -50,21 +55,36 @@ function Field({ id, definition, value, error, onChange }) {
             </span>
           </label>
           {definition.type === 'number' ? (
-            <div className="number-wrap">
-              <input
-                {...shared}
-                type="number"
-                inputMode="decimal"
-                min={definition.min}
-                max={definition.max}
-                step={definition.step ?? 'any'}
-                value={value ?? ''}
-                onChange={(e) => onChange(e.target.value)}
-              />
-              <span>{definition.unit}</span>
-            </div>
+            <>
+              <select
+                aria-label={`${definition.label} answer status`}
+                aria-describedby={describedBy}
+                value={answerStatus}
+                onChange={(event) =>
+                  onChange(event.target.value === 'known' ? '' : event.target.value)
+                }
+              >
+                <option value="known">Enter a value</option>
+                <option value="unknown">I'm not sure</option>
+                <option value="declined">Prefer not to answer</option>
+              </select>
+              <div className="number-wrap">
+                <input
+                  {...shared}
+                  type="number"
+                  inputMode="decimal"
+                  min={definition.min}
+                  max={definition.max}
+                  step={definition.step ?? 'any'}
+                  value={answerStatus === 'known' ? (value ?? '') : ''}
+                  disabled={answerStatus !== 'known'}
+                  onChange={(e) => onChange(e.target.value)}
+                />
+                <span>{definition.unit}</span>
+              </div>
+            </>
           ) : (
-            <select {...shared} value={value || ''} onChange={(e) => onChange(e.target.value)}>
+            <select {...shared} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
               <option value="">Select an answer, or leave unknown</option>
               {definition.options.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -159,7 +179,7 @@ export default function Questionnaire() {
         );
         requestAnimationFrame(() => errorSummary.current?.focus());
       }
-    } else setStep(step + 1);
+    } else setStep(activeStep + 1);
   }
   if (catalogueStatus !== 'ready')
     return (
@@ -188,16 +208,16 @@ export default function Questionnaire() {
               <li
                 key={label}
                 className={
-                  index === step
+                  index === activeStep
                     ? 'stepper__item stepper__item--active'
-                    : index < step
+                    : index < activeStep
                       ? 'stepper__item stepper__item--done'
                       : 'stepper__item'
                 }
-                aria-current={index === step ? 'step' : undefined}
+                aria-current={index === activeStep ? 'step' : undefined}
               >
                 <span className="stepper__number">
-                  {index < step ? (
+                  {index < activeStep ? (
                     <Icon name="check" size={15} />
                   ) : (
                     String(index + 1).padStart(2, '0')
@@ -218,12 +238,12 @@ export default function Questionnaire() {
         <div className="questionnaire-main">
           <div className="form-progress">
             <span>
-              Step {step + 1} of {sections.length + 1}
+              Step {activeStep + 1} of {sections.length + 1}
             </span>
             <span>{reviewing ? 'Ready to review' : 'Your profile, your pace'}</span>
           </div>
           <div className="progress-track" aria-hidden="true">
-            <span style={{ width: `${((step + 1) / (sections.length + 1)) * 100}%` }} />
+            <span style={{ width: `${((activeStep + 1) / (sections.length + 1)) * 100}%` }} />
           </div>
           <form className="questionnaire-card" onSubmit={submit} noValidate>
             {Object.keys(errors).length > 0 && (
@@ -307,8 +327,8 @@ export default function Questionnaire() {
               <Button
                 type="button"
                 variant="secondary"
-                disabled={step === 0}
-                onClick={() => changeStep(step - 1)}
+                disabled={activeStep === 0}
+                onClick={() => changeStep(activeStep - 1)}
               >
                 Back
               </Button>

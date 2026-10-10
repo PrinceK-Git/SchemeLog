@@ -26,7 +26,7 @@ test('default repository selects declarative demo, detaches/freezes snapshots an
     first.catalogue.schemes[0].officialName = 'changed';
   }, TypeError);
   assert.equal(getScheme('demo-learning-pathways', first.catalogue).id, 'fx-sch-learning-pathways');
-  assert.equal(getScheme('demo-learning-pathways', first).recordVersion, 1);
+  assert.equal(getScheme('demo-learning-pathways', first).recordVersion, 2);
   assert.equal(getScheme('learning-pathways', first.catalogue), null);
   assert.equal(getScheme('demo-learning-pathways'), null);
   assert.ok(first.catalogue.schemes.every((record) => !('status' in record)));

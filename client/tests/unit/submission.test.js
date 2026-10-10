@@ -21,10 +21,12 @@ async function inputs(incomeIndex = 1) {
     questionPlan,
     draftProfile: {
       educationLevel: 'undergraduate',
+      domicile: 'IN-AS',
+      category: 'general',
       income: questionPlan.incomeBands[incomeIndex].id,
     },
     draftRevision: 2,
-    presentedFields: ['educationLevel', 'income'],
+    presentedFields: ['educationLevel', 'domicile', 'income', 'category'],
   };
 }
 
@@ -150,7 +152,7 @@ test('checklist pass/fail/unknown counts and version keys never affect assessmen
   const low = createSubmission(input).submission;
   const record = low.catalogueSnapshot.schemes[0];
   const key = preparationKey(record, record.documents[0]);
-  assert.equal(key, 'fx-sch-learning-pathways:1:doc-income');
+  assert.equal(key, 'fx-sch-learning-pathways:2:doc-income');
   const progress = { [key]: true };
   assert.deepEqual(preparationCounts(record, low.documentApplicability, progress), {
     applicable: 1,
@@ -180,7 +182,7 @@ test('checklist pass/fail/unknown counts and version keys never affect assessmen
     sessionReducer(checked, { type: 'check', key: 'unknown-key', checked: true }),
     checked,
   );
-  const changed = { ...record, recordVersion: 2 };
+  const changed = { ...record, recordVersion: record.recordVersion + 1 };
   assert.equal(
     preparationCounts(
       changed,
@@ -213,22 +215,63 @@ test('catalogue replacement preserves exact old records and rejects cross-versio
   const submission = createSubmission(input).submission;
   let state = { ...initialState, ...input, catalogueStatus: 'ready', submission };
   const load = structuredClone(input.catalogueLoad);
-  load.catalogue.catalogueVersion = 'demo-2026-10-10.2';
-  load.catalogue.schemes[0].recordVersion = 2;
+  load.catalogue.catalogueVersion = 'demo-2026-10-10.3';
+  load.catalogue.schemes[0].recordVersion = 3;
   state = sessionReducer(state, {
     type: 'catalogue-ready',
     load,
     plan: buildQuestionPlan(load.catalogue, { vocab: vocabularies }),
   });
-  assert.equal(state.submission.catalogueSnapshot.schemes[0].recordVersion, 1);
+  assert.equal(state.submission.catalogueSnapshot.schemes[0].recordVersion, 2);
   assert.equal(
     state.submission.assessments.find((item) => item.schemeId === 'fx-sch-learning-pathways')
       .schemeVersion,
-    1,
+    2,
   );
-  assert.equal(state.catalogueLoad.catalogue.schemes[0].recordVersion, 2);
+  assert.equal(state.catalogueLoad.catalogue.schemes[0].recordVersion, 3);
   assert.notEqual(state.draftRevision, submission.submittedRevision);
   assert.deepEqual(state.presentedFields, []);
   assert.deepEqual(state.draftProfile, {});
   assert.equal(sessionReducer(state, { type: 'submit-success', submission }), state);
+});
+
+for (const [domicile, category, expected] of [
+  ['IN-AS', 'general', 'potential'],
+  ['IN-BR', 'obc', 'potential'],
+  ['IN-MH', 'general', 'unmet'],
+  ['IN-AS', 'sc', 'unmet'],
+  ['unknown', 'general', 'verification'],
+  ['IN-AS', 'declined', 'verification'],
+  ['', '', 'verification'],
+  ['IN-MH', 'declined', 'unmet'],
+])
+  test(`state/category submission ${domicile || 'blank'}/${category || 'blank'} -> ${expected}`, async () => {
+    const input = await inputs();
+    const result = createSubmission({
+      ...input,
+      draftProfile: { ...input.draftProfile, domicile, category },
+    });
+    assert.equal(result.ok, true);
+    const assessment = result.submission.assessments.find(
+      ({ schemeId }) => schemeId === 'fx-sch-learning-pathways',
+    );
+    assert.equal(assessment.status, expected);
+    for (const field of ['domicileState', 'category']) {
+      const row = assessment.ruleResults.find((rule) => rule.field === field);
+      assert.deepEqual(row.providedAnswer, result.submission.profile[field]);
+      assert.equal(row.evidence[0].kind, 'fictional-test-condition');
+    }
+    assert.equal(result.submission.context.catalogueVersion, 'demo-2026-10-10.2');
+    assert.equal(assessment.schemeVersion, 2);
+  });
+
+test('malformed state/category cannot reach the matching engine', async () => {
+  const input = await inputs();
+  for (const patch of [{ domicile: 'invented-state' }, { category: 'invented-category' }]) {
+    const result = createSubmission(
+      { ...input, draftProfile: { ...input.draftProfile, ...patch } },
+      { evaluate: () => assert.fail('Invalid codes must never reach assessment') },
+    );
+    assert.equal(result.ok, false);
+  }
 });

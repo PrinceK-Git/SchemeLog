@@ -7,13 +7,18 @@ import { SessionProvider } from '../../src/app/Session.jsx';
 import { createCatalogueRepository } from '../../src/repositories/catalogue.js';
 import { demoCatalogue } from '../../src/data/demo-catalogue.js';
 import reviewed from '../../src/data/catalogue.json';
+import { makeQuestionnaireCatalogue } from '../helpers/questionnaire-catalogue.js';
 import '../../src/styles/tokens.css';
 import '../../src/styles/global.css';
 import '../../src/styles/layout.css';
 
 function Harness() {
   const [scenario, setScenario] = useState('empty');
-  const mode = scenario === 'companions' || scenario === 'strict' ? 'demo' : 'reviewed';
+  const questionnaireScenario = ['all-fields', 'minimal', 'documents-only'].includes(scenario);
+  const mode =
+    questionnaireScenario || scenario === 'companions' || scenario === 'strict'
+      ? 'demo'
+      : 'reviewed';
   const loader = useMemo(() => {
     let attempts = 0;
     return createCatalogueRepository({
@@ -30,6 +35,7 @@ function Harness() {
           return catalogue;
         },
         demo: async () => {
+          if (questionnaireScenario) return makeQuestionnaireCatalogue(scenario);
           const catalogue = structuredClone(demoCatalogue);
           if (scenario === 'strict')
             catalogue.schemes[0].eligibility.rule.children[1].operator = 'lt';
@@ -58,7 +64,7 @@ function Harness() {
         },
       },
     }).getCatalogue;
-  }, [mode, scenario]);
+  }, [mode, scenario, questionnaireScenario]);
   return (
     <>
       <label>
@@ -70,6 +76,9 @@ function Harness() {
           <option value="quarantine">Reviewed quarantine</option>
           <option value="companions">Companion controls</option>
           <option value="strict">Strict income boundary</option>
+          <option value="all-fields">All canonical questionnaire fields</option>
+          <option value="minimal">Only education and income</option>
+          <option value="documents-only">Only conditional document fields</option>
         </select>
       </label>
       <BrowserRouter>

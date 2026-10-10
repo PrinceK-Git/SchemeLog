@@ -9,6 +9,9 @@ import { validateRule } from '../../../client/src/domain/validation/rules.js';
 import { vocabularies } from '../../../client/src/data/vocabularies.js';
 import * as clientFields from '../../../client/src/domain/profile/fields.js';
 import * as serverFields from '../../src/data/question-fields.js';
+import { getCatalogue } from '../../../client/src/repositories/catalogue.js';
+import { buildQuestionPlan } from '../../../client/src/domain/profile/question-plan.js';
+import { createSubmission } from '../../../client/src/app/submission.js';
 
 const vocab = loadVocabularies();
 const known = (value) => ({ state: 'known', value });
@@ -70,6 +73,43 @@ test('server wrapper and browser validator have exact valid/invalid profile pari
     { profileVersion: 1, additionalAnswers: { receivesOtherScholarship: known('no') } },
   ])
     assert.deepEqual(serverProfile(profile), validateProfile(profile, { vocab: vocabularies }));
+});
+
+test('frontend state/category submissions conform to server vocabulary and profile validation', async () => {
+  const catalogueLoad = await getCatalogue();
+  const questionPlan = buildQuestionPlan(catalogueLoad.catalogue, { vocab: vocabularies });
+  for (const state of vocab.files.states.entries.filter(({ code }) => code !== 'IN-XX')) {
+    for (const category of vocab.files.categories.entries.filter(
+      ({ code }) => !['cat-a', 'prefer-not'].includes(code),
+    )) {
+      const result = createSubmission({
+        catalogueLoad,
+        questionPlan,
+        draftRevision: 1,
+        presentedFields: questionPlan.draftFieldIds,
+        draftProfile: {
+          educationLevel: 'undergraduate',
+          domicile: state.code,
+          category: category.code,
+          income: questionPlan.incomeBands[0].id,
+        },
+      });
+      assert.equal(result.ok, true);
+      assert.deepEqual(serverProfile(result.submission.profile), { ok: true, errors: [] });
+      assert.deepEqual(result.submission.profile.domicileState, known(state.code));
+      assert.deepEqual(result.submission.profile.category, known(category.code));
+    }
+  }
+  for (const profile of [
+    { profileVersion: 1, domicileState: known('IN-BR'), category: known('obc') },
+    { profileVersion: 1, domicileState: { state: 'unsure' }, category: { state: 'declined' } },
+  ])
+    assert.equal(serverProfile(profile).ok, true);
+  for (const profile of [
+    { profileVersion: 1, domicileState: known('made-up') },
+    { profileVersion: 1, category: known('made-up') },
+  ])
+    assert.equal(serverProfile(profile).ok, false);
 });
 
 test('shared rule validator rejects operator-specific operands and checks every node property', () => {
