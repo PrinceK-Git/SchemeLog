@@ -68,7 +68,7 @@ test('CGPA never converts a percentage, and scale/context edits clear the old sc
     'cgpa',
   );
   assert.equal(updated.score, undefined);
-  assert.equal(fieldsFor(updated, companionPlan).score.visible, false);
+  assert.equal(fieldsFor(updated, companionPlan).score.visible, true);
   assert.equal(fieldsFor(updated, companionPlan).scoreScale.visible, true);
   const scaled = { ...updated, scoreScale: 'cgpa-4', score: '3.5', scoreContext: 'previous-year' };
   assert.equal(fieldsFor(scaled, companionPlan).score.max, 4);
@@ -141,11 +141,11 @@ test('strict normalization rejects undeclared and malformed hidden data instead 
 test('current demo includes only catalogue-relevant questions even when study level is unknown', () => {
   assert.deepEqual(
     visibleSections({ educationLevel: 'unknown' }, plan).map((section) => section.fields),
-    [['educationLevel'], ['income']],
+    [['educationLevel'], ['domicile'], ['income'], ['category']],
   );
   assert.deepEqual(visibleSections({}, { draftFieldIds: [], incomeBands: [] }), []);
   assert.deepEqual(visibleSections({}), []);
-  for (const id of ['domicile', 'course', 'category', 'institution', 'scoreType'])
+  for (const id of ['course', 'institution', 'scoreType'])
     assert.equal(fieldsFor({ educationLevel: 'undergraduate' }, plan)[id].visible, false);
 });
 
@@ -192,4 +192,35 @@ test('declared dotted answers use nested storage, independent copies and exact y
     'No',
   );
   assert.equal(normalize(next).profile.additionalAnswers.receivesOtherScholarship.value, 'no');
+});
+
+test('state and category controls use shared codes without fixture or duplicate decline choices', () => {
+  const fields = fieldsFor({}, plan);
+  assert.equal(fields.domicile.visible, true);
+  assert.equal(fields.category.visible, true);
+  assert.equal(fields.domicile.options.filter(({ value }) => value.startsWith('IN-')).length, 36);
+  assert.ok(
+    fields.domicile.options.some(({ value, label }) => value === 'IN-AS' && label === 'Assam'),
+  );
+  assert.ok(
+    fields.domicile.options.some(({ value, label }) => value === 'IN-BR' && label === 'Bihar'),
+  );
+  assert.ok(
+    fields.category.options.some(({ value, label }) => value === 'obc' && /OBC/.test(label)),
+  );
+  for (const field of [fields.domicile, fields.category]) {
+    assert.equal(field.options.filter(({ label }) => label === 'Prefer not to answer').length, 1);
+    assert.ok(!field.options.some(({ value }) => ['IN-XX', 'cat-a', 'prefer-not'].includes(value)));
+  }
+  assert.equal(
+    validateAnswers({ domicile: 'IN-XX' }, ['domicile'], plan).domicile !== undefined,
+    true,
+  );
+  assert.equal(
+    validateAnswers({ category: 'cat-a' }, ['category'], plan).category !== undefined,
+    true,
+  );
+  const result = normalize({ domicile: 'IN-BR', category: 'obc' }, plan);
+  assert.deepEqual(result.profile.domicileState, { state: 'known', value: 'IN-BR' });
+  assert.deepEqual(result.profile.category, { state: 'known', value: 'obc' });
 });

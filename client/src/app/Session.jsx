@@ -5,6 +5,7 @@ import { vocabularies } from '../data/vocabularies.js';
 import { catalogueMode } from '../data/catalogue-mode.js';
 import { createSubmission } from './submission.js';
 import { initialState, sessionReducer } from './session-state.js';
+import { fieldsFor } from '../data/questions.js';
 
 const SessionContext = createContext(null);
 export function SessionProvider({ children, loader = getCatalogue, mode = catalogueMode.mode }) {
@@ -21,6 +22,7 @@ export function SessionProvider({ children, loader = getCatalogue, mode = catalo
       .then((load) => {
         if (load.mode !== mode) throw new Error('Catalogue mode does not match configuration.');
         const plan = buildQuestionPlan(load.catalogue, { vocab: vocabularies });
+        fieldsFor({}, plan); // Fail unsupported UI mappings at the recoverable catalogue boundary.
         if (active) dispatch({ type: 'catalogue-ready', load, plan });
       })
       .catch(() => {

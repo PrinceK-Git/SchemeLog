@@ -20,6 +20,8 @@ const testConditions = [
   condition('undergraduate', 'Undergraduate study satisfies this fictional condition.'),
   condition('postgraduate', 'Postgraduate study satisfies this fictional alternative.'),
   condition('school', 'School study satisfies this fictional condition.'),
+  condition('domicile', 'Assam or Bihar domicile satisfies this fictional test condition only.'),
+  condition('category', 'General or OBC category satisfies this fictional test condition only.'),
   condition('income', 'Annual household income is at most INR 250000 for this fictional example.'),
   condition(
     'low-income',
@@ -82,8 +84,19 @@ const learning = scheme(
   group('learning-root', 'allOf', [
     level('learning-level', 'undergraduate'),
     income('learning-income', 250000),
+    node('learning-domicile', 'in', {
+      field: 'domicileState',
+      value: ['IN-AS', 'IN-BR'],
+      evidence: ['src-demo-domicile#loc-condition'],
+    }),
+    node('learning-category', 'in', {
+      field: 'category',
+      value: ['general', 'obc'],
+      evidence: ['src-demo-category#loc-condition'],
+    }),
   ]),
 );
+learning.recordVersion = 2;
 learning.documents.push({
   id: 'doc-income',
   type: 'income-certificate',
@@ -95,7 +108,7 @@ learning.documents.push({
 
 export const demoCatalogue = {
   mode: 'demo',
-  catalogueVersion: 'demo-2026-10-10.1',
+  catalogueVersion: 'demo-2026-10-10.2',
   evaluatedAt: catalogueMode.evaluatedAt,
   coverage: {
     schemeCount: 4,
@@ -134,6 +147,8 @@ export const demoCatalogue = {
 export const referenceProfile = {
   profileVersion: 1,
   educationLevel: { state: 'known', value: 'undergraduate' },
+  domicileState: { state: 'known', value: 'IN-AS' },
+  category: { state: 'known', value: 'general' },
   annualHouseholdIncome: {
     state: 'known',
     value: {

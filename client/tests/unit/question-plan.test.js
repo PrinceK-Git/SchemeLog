@@ -18,8 +18,13 @@ const plan = (input) => buildQuestionPlan(input, { vocab });
 test('demo plan is minimal, stable and collects document thresholds without mutating data', () => {
   const original = structuredClone(demoCatalogue);
   const result = plan(demoCatalogue);
-  assert.deepEqual(result.requiredProfileFields, ['educationLevel', 'annualHouseholdIncome']);
-  assert.deepEqual(result.draftFieldIds, ['educationLevel', 'income']);
+  assert.deepEqual(result.requiredProfileFields, [
+    'educationLevel',
+    'domicileState',
+    'annualHouseholdIncome',
+    'category',
+  ]);
+  assert.deepEqual(result.draftFieldIds, ['educationLevel', 'domicile', 'income', 'category']);
   assert.deepEqual(
     result.incomeBands.map((band) => band.value),
     [interval(0, 100000), interval(100000, 250000, false), interval(250000, null, false)],

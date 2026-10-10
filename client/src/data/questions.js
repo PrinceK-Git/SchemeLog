@@ -104,41 +104,48 @@ export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [
     'diploma-technical': 'diploma-',
   };
   const courses = choices('courses').filter(
-    ({ value }) => value === 'other' || (prefixes[level] && value.startsWith(prefixes[level])),
+    ({ value }) =>
+      !hasLevel || value === 'other' || (prefixes[level] && value.startsWith(prefixes[level])),
   );
   const isSchool = level === 'school';
   const duration = Number(draft.courseDuration);
   const yearCount = Number.isInteger(duration) && duration >= 1 && duration <= 100 ? duration : 12;
   const scale = draft.scoreType === 'cgpa' ? draft.scoreScale : draft.scoreType;
   const scoreReady = ['percentage', 'percentile', 'cgpa-10', 'cgpa-4'].includes(scale);
+  const schoolStages = choices('school-stages').map(({ label }) => option(label, label));
+  const courseYears = Array.from({ length: yearCount }, (_, index) =>
+    option(`Year ${index + 1}`, `Year ${index + 1}`),
+  );
   const definitions = {
     educationLevel: { type: 'radio', options: educationOptions },
     course: {
-      visible: hasLevel,
       options: optional(courses),
       hint: 'Choose the exact course; a broad stream cannot identify a degree.',
     },
     studyYear: {
-      visible: hasLevel,
-      label: isSchool ? 'Current school class' : 'Current year of study',
+      label: !hasLevel
+        ? 'Current year or school class'
+        : isSchool
+          ? 'Current school class'
+          : 'Current year of study',
       options: optional(
-        isSchool
-          ? choices('school-stages').map(({ label }) => option(label, label))
-          : Array.from({ length: yearCount }, (_, index) =>
-              option(`Year ${index + 1}`, `Year ${index + 1}`),
-            ),
+        !hasLevel ? [...schoolStages, ...courseYears] : isSchool ? schoolStages : courseYears,
       ),
+      hint: 'Choose an explicit school class or course year. A course year also needs the actual course duration.',
     },
     courseDuration: {
       type: 'number',
-      visible: hasLevel && !isSchool,
+      visible: !isSchool,
       min: 1,
       max: 100,
       step: 1,
       unit: 'years',
       hint: 'Enter the actual duration; it is never inferred from your course.',
     },
-    domicile: { options: optional(choices('states')) },
+    domicile: {
+      options: optional(choices('states').filter(({ value }) => value !== 'IN-XX')),
+      hint: 'Choose your domicile state or union territory, not where you currently study. You can leave this unknown.',
+    },
     income: {
       options: optional((plan.incomeBands ?? []).map((band) => option(band.id, band.label))),
       hint: 'Annual household income in INR, not monthly income. A band overlapping a strict condition remains uncertain.',
@@ -148,7 +155,13 @@ export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [
       hint: 'Ownership type does not establish recognition or accreditation.',
     },
     category: {
-      options: optional(choices('categories')),
+      options: optional(
+        vocabularies.files.categories.entries
+          .filter(({ code }) => !['cat-a', 'prefer-not'].includes(code))
+          .map(({ code, label, aliases }) =>
+            option(code, aliases?.length ? `${label} (${aliases[0]})` : label),
+          ),
+      ),
       hint: 'You can leave this unknown or choose not to answer.',
     },
     scoreType: {
@@ -160,12 +173,11 @@ export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [
       hint: 'Percentage, percentile and CGPA are different; no conversion is performed.',
     },
     scoreScale: {
-      visible: draft.scoreType === 'cgpa',
+      visible: !['percentage', 'percentile', 'cgpa-10', 'cgpa-4'].includes(draft.scoreType),
       options: optional(choices('score-scales').filter(({ value }) => value.startsWith('cgpa-'))),
     },
     score: {
       type: 'number',
-      visible: scoreReady,
       min: 0,
       max: scale === 'cgpa-4' ? 4 : scale === 'cgpa-10' ? 10 : 100,
       step: 'any',
@@ -176,8 +188,12 @@ export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [
             ? 'percentile'
             : scale === 'cgpa-4'
               ? 'out of 4'
-              : 'out of 10',
-      hint: 'Leave blank if unsure. Zero is a valid score.',
+              : scale === 'cgpa-10'
+                ? 'out of 10'
+                : 'points (scale unconfirmed)',
+      hint: scoreReady
+        ? 'Leave blank if unsure. Zero is a valid score.'
+        : 'You can enter your score, but its format and scale must be confirmed before it can be assessed. Zero is valid.',
     },
     scoreContext: {
       options: optional(choices('exam-contexts')),
@@ -195,6 +211,13 @@ export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [
       ]),
     ),
   };
+  for (const id of active) {
+    if (
+      !Object.hasOwn(definitions, id) ||
+      !sectionDefinitions.some((section) => section.fields.includes(id))
+    )
+      throw new TypeError(`Question plan references an unsupported control: ${id}`);
+  }
   return Object.fromEntries(
     Object.entries(definitions).map(([id, definition]) => [
       id,
@@ -240,7 +263,10 @@ export function updateAnswer(draft, field, value) {
       'academicScore',
     ],
     course: ['studyYear', 'courseDuration', 'score', 'scoreContext', 'academicScore'],
-    courseDuration: ['studyYear'],
+    courseDuration:
+      typeof draft.studyYear === 'string' && draft.studyYear.startsWith('Class ')
+        ? []
+        : ['studyYear'],
     scoreType: ['score', 'scoreScale', 'academicScore'],
     scoreScale: ['score', 'academicScore'],
     scoreContext: ['score', 'academicScore'],
