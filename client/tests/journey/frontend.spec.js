@@ -69,6 +69,15 @@ test('answer-driven discovery, grouped reasons, edit/stale/resubmit and privacy'
   await accessibility(page);
   await profile(page);
   await expect(card(page, learning).locator('.badge')).toHaveText('Potential match');
+  await expect(card(page, 'Next Chapter Demo Grant').locator('.badge')).toHaveText(
+    'Needs verification',
+  );
+  await expect(card(page, 'New Horizons Demo Award').locator('.badge')).toHaveText(
+    'Does not meet a known condition',
+  );
+  await expect(card(page, 'Future Notice Demo Scholarship').locator('.badge')).toHaveText(
+    'Information unavailable',
+  );
   await expect(page.getByText('1 potential match among 4 fictional scholarships.')).toBeVisible();
   await card(page, learning).getByText('Why this result', { exact: true }).click();
   await expect(
@@ -134,6 +143,7 @@ test('honest uncertainty, manual alternatives, conditional documents and unknown
   await expect(page.getByText('Unknown — no confirmed deadline')).toBeVisible();
   await page.getByRole('checkbox').check();
   await expect(page.getByText('You marked 0 preparation tasks as done.')).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Needs verification');
   await accessibility(page);
 });
 
@@ -179,6 +189,39 @@ test('preparation persists in memory, applicability changes and direct routes re
   await expect(page.getByRole('heading', { name: 'We couldn’t find that page.' })).toBeVisible();
   await page.goto('/missing-page');
   await expect(page.getByRole('link', { name: 'Back to home', exact: true })).toBeVisible();
+});
+
+test('reset clears a marked preparation task even after resubmitting the same profile', async ({
+  page,
+}) => {
+  await profile(page, 'low');
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await page.getByRole('checkbox').check();
+  await expect(page.getByText('You marked 1 preparation task as done.')).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Potential match');
+  await page.getByRole('link', { name: 'Back to results' }).click();
+  await page.getByRole('button', { name: 'Reset session' }).click();
+  await expect(page.getByRole('heading', { name: 'Let’s get to know you first.' })).toBeVisible();
+
+  // Stay in the same document: a reload would independently clear memory and mask a broken reset.
+  await page.getByRole('link', { name: 'Start the questionnaire', exact: true }).click();
+  await expect(
+    page.getByRole('radio', { name: 'Undergraduate degree', exact: true }),
+  ).not.toBeChecked();
+  await page.getByRole('radio', { name: 'Undergraduate degree', exact: true }).check();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Annual household income', { exact: true })).toHaveValue('');
+  await page
+    .getByLabel('Annual household income', { exact: true })
+    .selectOption('income-closed-0-100000');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Show My Scholarships' }).click();
+  await card(page, learning).getByRole('link', { name: 'View requirements' }).click();
+  await expect(page.getByRole('checkbox')).toBeEnabled();
+  await expect(page.getByRole('checkbox')).not.toBeChecked();
+  await expect(page.getByText('You marked 0 preparation tasks as done.')).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Potential match');
+  await accessibility(page);
 });
 
 test('unknown answers, filters, school reset and responsive landing regressions', async ({
