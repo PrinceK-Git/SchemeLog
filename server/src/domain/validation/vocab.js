@@ -27,20 +27,8 @@ export function loadVocabularies(dir = VOCAB_DIR) {
   return { version: version || '0.0.0', codes, files };
 }
 
-/**
- * Which vocabulary a profile field's codes are drawn from.
- * Fields absent from this map are not code fields.
- */
-export const FIELD_VOCABULARY = {
-  domicileState: 'states',
-  educationLevel: 'education-levels',
-  courseCode: 'courses',
-  category: 'categories',
-  institutionType: 'institution-types',
-};
-
-/** Fields that carry a numeric comparison (§8 rule operator table). */
-export const NUMERIC_FIELDS = new Set(['annualHouseholdIncome', 'academicScore', 'studyYear']);
-
-/** Fields a score rule applies to; these must declare `scale` and `context`. */
-export const SCORE_FIELDS = new Set(['academicScore']);
+export {
+  FIELD_VOCABULARY,
+  NUMERIC_FIELDS,
+  SCORE_FIELDS,
+} from '../../../../client/src/domain/profile/fields.js';
