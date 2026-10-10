@@ -7,6 +7,7 @@ import Questionnaire from '../pages/Questionnaire';
 import Results from '../pages/Results';
 import ScholarshipDetail from '../pages/ScholarshipDetail';
 import NotFound from '../pages/NotFound';
+import { useSession } from './Session';
 
 function RouteFocus() {
   const { pathname } = useLocation();
@@ -23,22 +24,27 @@ function RouteFocus() {
         : pathname === '/questionnaire'
           ? 'Your student profile'
           : pathname === '/results'
-            ? 'Scholarship preview'
+            ? 'Scholarship results'
             : 'Scholarship requirements';
     document.title = `Schemelog — ${name}`;
   }, [pathname]);
   return null;
 }
 export default function App() {
+  const { mode } = useSession();
   return (
     <>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
       <div className="preview-strip">
-        <span className="preview-dot" />A first look at Schemelog{' '}
-        <span className="preview-strip__separator">/</span>{' '}
-        <strong>Demo data. Real possibilities ahead.</strong>
+        <span className="preview-dot" />
+        Schemelog <span className="preview-strip__separator">/</span>{' '}
+        <strong>
+          {mode === 'demo'
+            ? 'Interactive demo · Fictional scholarships'
+            : 'Reviewed catalogue · Limited coverage'}
+        </strong>
       </div>
       <header className="header">
         <div className="container header__inner">
@@ -81,7 +87,10 @@ export default function App() {
           <p className="footer__disclosure">
             An independent discovery platform, not a government website.
             <br />
-            Phase 1 preview · Fictional schemes · No applications submitted here.
+            {mode === 'demo'
+              ? 'Interactive demo · Fictional schemes'
+              : 'Limited reviewed catalogue'}{' '}
+            · No applications submitted here.
           </p>
           <div className="footer__links">
             <Link to="/#privacy">Privacy</Link>

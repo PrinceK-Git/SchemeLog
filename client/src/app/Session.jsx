@@ -1,35 +1,85 @@
-import { createContext, useContext, useReducer } from 'react';
-import { normalizeProfile, updateAnswer } from '../data/questions';
+import { createContext, useContext, useEffect, useReducer, useRef, useState } from 'react';
+import { getCatalogue } from '../repositories/catalogue.js';
+import { buildQuestionPlan } from '../domain/profile/question-plan.js';
+import { vocabularies } from '../data/vocabularies.js';
+import { catalogueMode } from '../data/catalogue-mode.js';
+import { createSubmission } from './submission.js';
+import { initialState, sessionReducer } from './session-state.js';
 
 const SessionContext = createContext(null);
-const initialState = { draftProfile: {}, submittedProfile: null, checklistProgress: {} };
-function reducer(state, action) {
-  switch (action.type) {
-    case 'answer':
+export function SessionProvider({ children, loader = getCatalogue, mode = catalogueMode.mode }) {
+  const [state, dispatch] = useReducer(sessionReducer, initialState);
+  const [attempt, retry] = useState(0);
+  const stateRef = useRef(state);
+  const submitting = useRef(false);
+  stateRef.current = state;
+  useEffect(() => {
+    let active = true;
+    dispatch({ type: 'catalogue-loading' });
+    Promise.resolve()
+      .then(loader)
+      .then((load) => {
+        if (load.mode !== mode) throw new Error('Catalogue mode does not match configuration.');
+        const plan = buildQuestionPlan(load.catalogue, { vocab: vocabularies });
+        if (active) dispatch({ type: 'catalogue-ready', load, plan });
+      })
+      .catch(() => {
+        if (active) dispatch({ type: 'catalogue-error' });
+      });
+    return () => {
+      active = false;
+    };
+  }, [loader, mode, attempt]);
+  function submit() {
+    if (submitting.current || stateRef.current.catalogueStatus !== 'ready')
       return {
-        ...state,
-        draftProfile: updateAnswer(state.draftProfile, action.field, action.value),
+        ok: false,
+        errors: [{ field: '', message: 'Wait for the catalogue before submitting.' }],
       };
-    case 'submit':
-      return { ...state, submittedProfile: normalizeProfile(state.draftProfile) };
-    case 'check':
+    submitting.current = true;
+    try {
+      const result = createSubmission({
+        ...stateRef.current,
+        evaluatedAt: new Date().toISOString(),
+      });
+      if (result.ok) {
+        const action = { type: 'submit-success', submission: result.submission };
+        if (sessionReducer(stateRef.current, action) === stateRef.current)
+          return {
+            ok: false,
+            errors: [{ field: '', message: 'Your answers changed. Please submit again.' }],
+          };
+        dispatch(action);
+      }
+      return result;
+    } catch {
       return {
-        ...state,
-        checklistProgress: { ...state.checklistProgress, [action.key]: action.checked },
+        ok: false,
+        errors: [
+          {
+            field: '',
+            message:
+              'We could not assess this catalogue. Your answers and previous submission have been kept. Please retry or return home.',
+          },
+        ],
       };
-    case 'reset':
-      return initialState;
-    default:
-      return state;
+    } finally {
+      submitting.current = false;
+    }
   }
-}
-export function SessionProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const stale =
-    state.submittedProfile !== null &&
-    JSON.stringify(normalizeProfile(state.draftProfile)) !== JSON.stringify(state.submittedProfile);
   return (
-    <SessionContext.Provider value={{ ...state, dispatch, stale }}>
+    <SessionContext.Provider
+      value={{
+        ...state,
+        mode,
+        dispatch,
+        submit,
+        retryCatalogue: () => retry((value) => value + 1),
+        stale: Boolean(
+          state.submission && state.draftRevision !== state.submission.submittedRevision,
+        ),
+      }}
+    >
       {children}
     </SessionContext.Provider>
   );

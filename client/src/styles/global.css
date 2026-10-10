@@ -1,3 +1,36 @@
+/* Logical rows preserve group meaning without deep indentation on narrow screens. */
+.logical-rules {
+  list-style: none;
+  padding-left: 0;
+  overflow-wrap: anywhere;
+}
+.logical-rules .logical-rules {
+  padding-left: 0.7rem;
+  margin-left: 0.2rem;
+  border-left: 2px solid var(--border);
+}
+.logical-rules > li {
+  margin-block: 0.9rem;
+}
+.rule-row p {
+  margin-block: 0.4rem;
+}
+.rule-state--pass {
+  color: var(--green);
+}
+.rule-state--context,
+.rule-state--unknown {
+  color: var(--muted);
+}
+.profile-card dd,
+.detail-sidebar,
+.notice {
+  overflow-wrap: anywhere;
+}
+.results-main,
+.detail-main {
+  min-width: 0;
+}
 * {
   box-sizing: border-box;
 }

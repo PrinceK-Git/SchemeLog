@@ -1,8 +1,11 @@
 ﻿# Schemelog
 
-React scholarship-discovery demo with Phase 2 catalogue contracts and offline publication tooling.
+React scholarship-discovery demo with answer-driven matching, conditional preparation and offline
+publication tooling.
 
-**Status:** the student journey remains a labelled fictional demo. Three researched real scheme
+**Status:** the student journey uses the Phase 3 engine with explicitly fictional test conditions.
+Answers change results; explanations and checklists use the last submitted in-memory profile.
+Three researched real scheme
 records are **drafts**, not independently reviewed publications. The generated real catalogue is
 intentionally empty. Do not use draft rules for student assessments.
 
@@ -80,5 +83,8 @@ make no requests until a reviewed registry change is added. Raw bytes remain in 
 ## Privacy and remaining work
 
 Answers remain in React memory; there are no accounts, analytics, uploads or profile network requests.
-The Phase 1 questionnaire still uses its demo answer format; real contract integration is deferred.
-See [the handoff](docs/PHASE2-STATUS.md) and [research notes](docs/verification/) before publishing.
+Questionnaire submission uses strict version-1 profile normalization. The active demo asks only for
+education level and annual income bands; unrelated sensitive questions are hidden. Editing answers
+marks results stale until resubmission. Checklist checkmarks never change eligibility.
+See [the Phase 4 handoff](docs/PHASE4-HANDOFF.md) for validation evidence and remaining release gates,
+and [research notes](docs/verification/) before publishing real records.

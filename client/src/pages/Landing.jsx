@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { Button } from '../components/UI';
+import { Button, ModeDisclosure, CatalogueState } from '../components/UI';
+import { useSession } from '../app/Session';
 import './Landing.css';
 
 export default function Landing() {
   const { hash } = useLocation();
+  const { mode, catalogueLoad, catalogueStatus } = useSession();
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
   }, [hash]);
@@ -23,12 +25,13 @@ export default function Landing() {
               meant for <em>you.</em>
             </h1>
             <p className="hero__description">
-              Answer a few simple questions to explore government scholarships that may fit your
-              academic and financial profile.
+              {mode === 'demo'
+                ? 'Explore fictional scholarship conditions with answers that change your results.'
+                : 'Compare your answers with the published scholarship conditions in this limited catalogue.'}
             </p>
             <div className="hero__actions">
               <Button to="/questionnaire">
-                Find My Scholarships <Icon name="arrow" />
+                {mode === 'demo' ? 'Try the demo' : 'Explore scholarships'} <Icon name="arrow" />
               </Button>
               <span className="hero__time">
                 <Icon name="clock" size={16} />A few simple steps
@@ -44,6 +47,12 @@ export default function Landing() {
                 Your answers stay in this tab
               </span>
             </div>
+            <ModeDisclosure
+              mode={mode}
+              coverage={catalogueLoad?.coverage}
+              quarantined={catalogueLoad?.quarantined}
+            />
+            {catalogueStatus !== 'ready' && <CatalogueState />}
           </div>
           <div className="hero-art" aria-hidden="true">
             <div className="hero-art__orbit" />
@@ -149,7 +158,7 @@ export default function Landing() {
               n: '03',
               icon: 'file',
               title: 'Get ready for the next step',
-              text: 'Review a preparation checklist, then use official sources for the latest rules and application process.',
+              text: 'Review conditional preparation tasks. Checkmarks are reminders, not proof of eligibility or a completed application.',
             },
           ].map((step) => (
             <article className="step-card" key={step.n}>
@@ -172,15 +181,16 @@ export default function Landing() {
             an honest explanation.
           </h2>
           <p>
-            The full product will compare your answers with reviewed scholarship rules and explain
-            both the matches and the unknowns. Final eligibility and approval always rest with the
-            responsible authority.
+            Your submitted answers are compared with the selected catalogue’s rules. Explanations
+            show both satisfied conditions and uncertainty. Final approval for any real scholarship
+            always rests with the responsible authority.
           </p>
           <div className="about-panel__note">
             <Icon name="info" />
             <p>
-              This preview contains four fictional schemes to demonstrate the experience. It does
-              not calculate eligibility or represent a verified scholarship catalogue.
+              {mode === 'demo'
+                ? 'This interactive prototype uses fictional test conditions, not verified government requirements. Your answers drive the demonstration, not a real scholarship assessment.'
+                : 'Only published records are included. Limited coverage is not evidence that other opportunities do not exist.'}
             </p>
           </div>
         </div>

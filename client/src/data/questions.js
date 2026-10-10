@@ -1,212 +1,297 @@
+import { vocabularies } from './vocabularies.js';
+import { ADDITIONAL_FIELDS } from '../domain/profile/fields.js';
+
 const option = (value, label) => ({ value, label });
 export const unknown = option('unknown', "I'm not sure");
 export const declined = option('declined', 'Prefer not to answer');
-export const educationOptions = [
-  option('school', 'School'),
-  option('undergraduate', 'Undergraduate degree'),
-  option('postgraduate', 'Postgraduate degree'),
-  option('diploma', 'Diploma / technical education'),
-  option('other', 'Other'),
-  unknown,
-];
-const courseOptions = {
-  school: ['Secondary school', 'Higher secondary school'],
-  undergraduate: [
-    'Arts / humanities',
-    'Science',
-    'Commerce',
-    'Engineering',
-    'Medicine / health sciences',
-    'Other undergraduate course',
-  ],
-  postgraduate: [
-    'Arts / humanities',
-    'Science',
-    'Commerce / management',
-    'Engineering',
-    'Other postgraduate course',
-  ],
-  diploma: ['Technical diploma', 'Vocational training', 'Other diploma'],
+const choices = (name) =>
+  vocabularies.files[name].entries.map(({ code, label }) => option(code, label));
+const optional = (options) => [...options, unknown, declined];
+export const educationOptions = optional(
+  choices('education-levels').map((entry) =>
+    entry.value === 'diploma-technical' ? { ...entry, value: 'diploma' } : entry,
+  ),
+);
+
+export const fieldLabels = {
+  educationLevel: 'Current level of study',
+  courseCode: 'Course or stream',
+  course: 'Course or stream',
+  studyYear: 'Current year or school class',
+  courseDuration: 'Total course duration in years',
+  domicileState: 'Home state / domicile',
+  domicile: 'Home state / domicile',
+  annualHouseholdIncome: 'Annual household income',
+  income: 'Annual household income',
+  institutionType: 'Institution type',
+  institution: 'Institution type',
+  category: 'Category',
+  academicScore: 'Academic examination score',
+  scoreType: 'Examination score format',
+  scoreScale: 'CGPA scale',
+  score: 'Examination score',
+  scoreContext: 'Which examination does this score describe?',
+  ...Object.fromEntries(
+    Object.entries(ADDITIONAL_FIELDS).map(([key, value]) => [
+      `additionalAnswers.${key}`,
+      value.label,
+    ]),
+  ),
 };
-const states = [
-  'Andaman and Nicobar Islands',
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chandigarh',
-  'Chhattisgarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jammu and Kashmir',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Ladakh',
-  'Lakshadweep',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Puducherry',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-];
+
 export const sectionDefinitions = [
   {
     id: 'education',
     short: 'Education',
     title: 'Let’s start with your studies.',
-    description: 'A little context helps make scholarship requirements easier to understand.',
-    fields: ['educationLevel', 'course', 'studyYear'],
+    description: 'Only questions needed by this catalogue are included.',
+    fields: ['educationLevel', 'course', 'courseDuration', 'studyYear'],
   },
   {
     id: 'location',
     short: 'Domicile',
     title: 'Where is your home state?',
-    description:
-      'Some schemes depend on your domicile, which may be different from where you study.',
+    description: 'Domicile may be different from the state where you study.',
     fields: ['domicile'],
   },
   {
     id: 'income',
     short: 'Household',
     title: 'A little about your household.',
-    description:
-      'Choose an annual income range, or leave this unknown. No income certificate is needed here.',
+    description: 'Choose an annual range, or leave this unknown. No certificate is needed here.',
     fields: ['income'],
   },
   {
     id: 'details',
     short: 'Other details',
     title: 'Just a few more details.',
-    description:
-      'These questions demonstrate information a scheme may need. You can choose not to share.',
-    fields: ['institution', 'category', 'scoreType', 'score'],
+    description: 'These questions are referenced by this catalogue. You can choose not to share.',
+    fields: [
+      'institution',
+      'category',
+      'scoreType',
+      'scoreScale',
+      'scoreContext',
+      'score',
+      ...Object.keys(ADDITIONAL_FIELDS).map((key) => `additionalAnswers.${key}`),
+    ],
   },
 ];
-export function fieldsFor(profile) {
-  const course = courseOptions[profile.educationLevel];
-  const academic = ['undergraduate', 'postgraduate', 'diploma'].includes(profile.educationLevel);
-  return {
-    educationLevel: { label: 'Current level of study', type: 'radio', options: educationOptions },
+
+export function getDraftAnswer(draft, id) {
+  return id.startsWith('additionalAnswers.')
+    ? draft.additionalAnswers?.[id.slice('additionalAnswers.'.length)]
+    : draft[id];
+}
+
+/** No plan means no active collection. Plans, not previous answers, define relevance. */
+export function fieldsFor(draft = {}, plan = { draftFieldIds: [], incomeBands: [] }) {
+  const active = new Set(plan.draftFieldIds);
+  const level = draft.educationLevel;
+  const hasLevel = [
+    'school',
+    'undergraduate',
+    'postgraduate',
+    'diploma',
+    'diploma-technical',
+    'other',
+  ].includes(level);
+  const prefixes = {
+    school: 'school-',
+    undergraduate: 'ug-',
+    postgraduate: 'pg-',
+    diploma: 'diploma-',
+    'diploma-technical': 'diploma-',
+  };
+  const courses = choices('courses').filter(
+    ({ value }) => value === 'other' || (prefixes[level] && value.startsWith(prefixes[level])),
+  );
+  const isSchool = level === 'school';
+  const duration = Number(draft.courseDuration);
+  const yearCount = Number.isInteger(duration) && duration >= 1 && duration <= 100 ? duration : 12;
+  const scale = draft.scoreType === 'cgpa' ? draft.scoreScale : draft.scoreType;
+  const scoreReady = ['percentage', 'percentile', 'cgpa-10', 'cgpa-4'].includes(scale);
+  const definitions = {
+    educationLevel: { type: 'radio', options: educationOptions },
     course: {
-      label: 'Course or stream',
-      visible: Boolean(course),
-      options: [...(course || []).map((v) => option(v, v)), unknown],
+      visible: hasLevel,
+      options: optional(courses),
+      hint: 'Choose the exact course; a broad stream cannot identify a degree.',
     },
     studyYear: {
-      label: profile.educationLevel === 'school' ? 'Current school stage' : 'Current year of study',
-      visible: Boolean(course),
-      options: [
-        ...(profile.educationLevel === 'school'
-          ? ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'Other class']
-          : ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5 or later']
-        ).map((v) => option(v, v)),
-        unknown,
-      ],
-      hint: 'Your current stage of education, not the scholarship application year.',
+      visible: hasLevel,
+      label: isSchool ? 'Current school class' : 'Current year of study',
+      options: optional(
+        isSchool
+          ? choices('school-stages').map(({ label }) => option(label, label))
+          : Array.from({ length: yearCount }, (_, index) =>
+              option(`Year ${index + 1}`, `Year ${index + 1}`),
+            ),
+      ),
     },
-    domicile: {
-      label: 'State or union territory of domicile',
-      options: [...states.map((v) => option(v, v)), unknown],
-      hint: 'Domicile is your legally recognized home state. Check your certificate if you are unsure; do not automatically use your college’s location.',
+    courseDuration: {
+      type: 'number',
+      visible: hasLevel && !isSchool,
+      min: 1,
+      max: 100,
+      step: 1,
+      unit: 'years',
+      hint: 'Enter the actual duration; it is never inferred from your course.',
     },
+    domicile: { options: optional(choices('states')) },
     income: {
-      label: 'Annual household income',
-      options: [
-        option('under-1', 'Below ₹1,00,000'),
-        option('1-2.5', '₹1,00,000 to ₹2,50,000'),
-        option('2.5-5', 'Above ₹2,50,000 to ₹5,00,000'),
-        option('over-5', 'Above ₹5,00,000'),
-        unknown,
-        declined,
-      ],
-      hint: 'Total household income over a year, not a month. These are illustrative bands for this demo, not scheme eligibility thresholds.',
+      options: optional((plan.incomeBands ?? []).map((band) => option(band.id, band.label))),
+      hint: 'Annual household income in INR, not monthly income. A band overlapping a strict condition remains uncertain.',
     },
     institution: {
-      label: 'Institution type',
-      options: ['Government', 'Government-aided', 'Private', 'Other']
-        .map((v) => option(v, v))
-        .concat(unknown),
-      hint: 'Institution type does not confirm recognition or accreditation.',
+      options: optional(choices('institution-types')),
+      hint: 'Ownership type does not establish recognition or accreditation.',
     },
     category: {
-      label: 'Category',
-      options: ['General', 'SC', 'ST', 'OBC', 'EWS', 'Other']
-        .map((v) => option(v, v))
-        .concat(unknown, declined),
-      hint: 'Some schemes ask about category. This optional demo answer is kept only in this tab’s memory.',
+      options: optional(choices('categories')),
+      hint: 'You can leave this unknown or choose not to answer.',
     },
     scoreType: {
-      label: 'Previous examination score format',
-      visible: academic,
-      options: [option('percentage', 'Percentage'), option('cgpa', 'CGPA'), unknown, declined],
-      hint: 'This demo asks about your most recently completed examination. Real schemes may specify a different examination.',
+      options: optional([
+        option('percentage', 'Percentage'),
+        option('percentile', 'Percentile'),
+        option('cgpa', 'CGPA'),
+      ]),
+      hint: 'Percentage, percentile and CGPA are different; no conversion is performed.',
+    },
+    scoreScale: {
+      visible: draft.scoreType === 'cgpa',
+      options: optional(choices('score-scales').filter(({ value }) => value.startsWith('cgpa-'))),
     },
     score: {
-      label: 'Previous examination percentage',
       type: 'number',
-      visible: academic && profile.scoreType === 'percentage',
-      hint: 'Enter a number from 0 to 100, or leave blank if you are unsure. CGPA is never converted automatically.',
+      visible: scoreReady,
+      min: 0,
+      max: scale === 'cgpa-4' ? 4 : scale === 'cgpa-10' ? 10 : 100,
+      step: 'any',
+      unit:
+        scale === 'percentage'
+          ? '%'
+          : scale === 'percentile'
+            ? 'percentile'
+            : scale === 'cgpa-4'
+              ? 'out of 4'
+              : 'out of 10',
+      hint: 'Leave blank if unsure. Zero is a valid score.',
     },
+    scoreContext: {
+      options: optional(choices('exam-contexts')),
+      hint: 'Select the actual examination; no context is assumed.',
+    },
+    ...Object.fromEntries(
+      Object.entries(ADDITIONAL_FIELDS).map(([key, declaration]) => [
+        `additionalAnswers.${key}`,
+        {
+          options: optional(
+            declaration.values.map((value) => option(value, value === 'yes' ? 'Yes' : 'No')),
+          ),
+          hint: declaration.hint,
+        },
+      ]),
+    ),
   };
+  return Object.fromEntries(
+    Object.entries(definitions).map(([id, definition]) => [
+      id,
+      {
+        label: fieldLabels[id],
+        ...definition,
+        visible: active.has(id) && definition.visible !== false,
+      },
+    ]),
+  );
 }
-export function visibleSections(profile) {
-  const definitions = fieldsFor(profile);
+
+export function visibleSections(draft, plan) {
+  const definitions = fieldsFor(draft, plan);
   return sectionDefinitions
-    .map((s) => ({ ...s, fields: s.fields.filter((id) => definitions[id].visible !== false) }))
-    .filter((s) => s.fields.length);
+    .map((section) => ({
+      ...section,
+      fields: section.fields.filter((id) => definitions[id].visible),
+    }))
+    .filter((section) => section.fields.length);
 }
-export function updateAnswer(profile, field, value) {
-  const next = { ...profile, [field]: value };
-  if (field === 'educationLevel' && value !== profile.educationLevel) {
-    for (const dependent of ['course', 'studyYear', 'scoreType', 'score']) delete next[dependent];
-  }
-  if (field === 'scoreType' && value !== 'percentage') delete next.score;
+
+export function updateAnswer(draft, field, value) {
+  if (!Object.hasOwn(fieldLabels, field)) throw new TypeError('Choose a declared answer field.');
+  const next = { ...draft };
+  if (field.startsWith('additionalAnswers.')) {
+    next.additionalAnswers = {
+      ...draft.additionalAnswers,
+      [field.slice('additionalAnswers.'.length)]: value,
+    };
+  } else next[field] = value;
+  if (value === getDraftAnswer(draft, field)) return next;
+  const resets = {
+    educationLevel: [
+      'course',
+      'courseCode',
+      'studyYear',
+      'courseDuration',
+      'scoreType',
+      'score',
+      'scoreContext',
+      'scoreScale',
+      'academicScore',
+    ],
+    course: ['studyYear', 'courseDuration', 'score', 'scoreContext', 'academicScore'],
+    courseDuration: ['studyYear'],
+    scoreType: ['score', 'scoreScale', 'academicScore'],
+    scoreScale: ['score', 'academicScore'],
+    scoreContext: ['score', 'academicScore'],
+  };
+  for (const dependent of resets[field] ?? []) delete next[dependent];
   return next;
 }
-export function validateAnswers(profile, fieldIds = Object.keys(fieldsFor(profile))) {
+
+const blank = (value) => value == null || (typeof value === 'string' && !value.trim());
+export function validateAnswers(draft, fieldIds, plan) {
+  const definitions = fieldsFor(draft, plan);
   const errors = {};
-  const definitions = fieldsFor(profile);
-  for (const id of fieldIds) {
+  for (const id of fieldIds ?? Object.keys(definitions)) {
     const field = definitions[id];
-    const value = profile[id];
-    if (!field || field.visible === false || value == null || value === '') continue;
+    const value = getDraftAnswer(draft, id);
+    if (!field?.visible || blank(value)) continue;
     if (field.type === 'number') {
-      if (!Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 100)
-        errors[id] = 'Enter a percentage between 0 and 100, or leave it blank.';
-    } else if (!field.options.some((o) => o.value === value))
+      if (['unknown', 'unsure', 'declined'].includes(value)) continue;
+      const numeric =
+        typeof value === 'number'
+          ? value
+          : typeof value === 'string' && /^(?:\d+(?:\.\d+)?|\.\d+)$/.test(value.trim())
+            ? Number(value)
+            : NaN;
+      if (
+        !Number.isFinite(numeric) ||
+        numeric < field.min ||
+        numeric > field.max ||
+        (field.step === 1 && !Number.isInteger(numeric))
+      )
+        errors[id] =
+          `Enter ${field.step === 1 ? 'a whole number' : 'a number'} from ${field.min} to ${field.max}, or leave blank.`;
+    } else if (!field.options.some((entry) => entry.value === value))
       errors[id] = 'Choose one of the available answers, or leave this unknown.';
   }
   return errors;
 }
-export function answerLabel(profile, id) {
-  const value = profile[id];
-  if (value == null || value === '') return 'Not answered';
-  const definition = fieldsFor(profile)[id];
-  return (
-    definition?.options?.find((o) => o.value === value)?.label ||
-    (id === 'score' ? `${value}%` : value)
-  );
-}
-export function normalizeProfile(profile) {
-  const definitions = fieldsFor(profile);
-  return Object.fromEntries(
-    Object.entries(profile).filter(([id]) => definitions[id] && definitions[id].visible !== false),
-  );
+
+export function answerLabel(draft, id, plan) {
+  const value = getDraftAnswer(draft, id);
+  if (blank(value)) return 'Not answered';
+  if (value === 'declined') return declined.label;
+  if (value === 'unknown' || value === 'unsure') return unknown.label;
+  const definition = fieldsFor(draft, plan)[id];
+  const selected = definition?.options?.find((entry) => entry.value === value);
+  if (selected) return selected.label;
+  if (
+    definition?.type === 'number' &&
+    !validateAnswers(draft, [id], plan)[id] &&
+    ['string', 'number'].includes(typeof value)
+  )
+    return `${value}${definition.unit === '%' ? '%' : ` ${definition.unit}`}`;
+  return 'Answer needs checking';
 }
