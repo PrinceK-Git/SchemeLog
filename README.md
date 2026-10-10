@@ -1,87 +1,84 @@
-# Schemelog
+﻿# Schemelog
 
-**Your future. Your opportunities.**
+React scholarship-discovery demo with Phase 2 catalogue contracts and offline publication tooling.
 
-A responsive scholarship-discovery frontend built with React, Vite, JavaScript, and vanilla CSS. Phase 1 implements the full student journey with clearly labelled fictional data: landing page, guided questionnaire, result examples, and scholarship details with a preparation checklist.
+**Status:** the student journey remains a labelled fictional demo. Three researched real scheme
+records are **drafts**, not independently reviewed publications. The generated real catalogue is
+intentionally empty. Do not use draft rules for student assessments.
 
-Implements [Issue #1](https://github.com/PrinceK-Git/SchemeLog/issues/1).
+## Setup
 
-## Run locally
-
-Use Node.js 22.12 or newer (Node.js 24 is used for validation).
+Node.js 22.12+ (tested with Node 24). From the repository root:
 
 ```sh
 npm ci
+npm run setup
 npm run dev
 ```
 
-Open the local address printed by Vite. To check the production bundle:
-
-```sh
-npm run build
-npm run preview
-```
-
-## User journey
-
-1. Start at `/` and choose **Find My Scholarships**.
-2. Answer the optional questions at `/questionnaire`. Unknown and declined answers are supported; education choices control dependent questions. Review or edit answers before submitting.
-3. Explore `/results`, with four clearly separated assessment examples. **Preview scenario** also demonstrates an empty catalogue and a recoverable loading error.
-4. Open `/scholarships/learning-pathways` or another example, review requirements, and mark preparation tasks.
-
-Direct detail links work without a profile. Visiting `/results` without submitting answers offers a route back to the questionnaire. Unknown routes and scheme identifiers have a recovery page.
-
-## Privacy and honesty
-
-- All scholarships and assessments are fictional examples. Results are prewritten and do **not** calculate eligibility from questionnaire answers.
-- No scholarship rules, benefits, dates, or scheme-specific application destinations have been verified in this release.
-- External links open the National Scholarship Portal or myScheme as **general discovery resources**, never as application links for fictional schemes.
-- Answers and preparation checkmarks live only in React memory. In-app navigation preserves them; refresh, closing the tab, or opening a new tab starts a fresh session.
-- No accounts, analytics, database, document uploads, persistent browser storage, or profile network requests are used.
-- No Aadhaar, bank account numbers, government credentials, or OTPs are collected.
-- Preparation checkmarks are student notes, not eligibility confirmation or application submission.
-
-## Structure
+Dependencies and lockfiles are isolated in `client/` and `server/`. The root package forwards commands.
+No database or runtime backend is required.
 
 ```text
-src/
-  app/                  routes, shared shell, session state
-  components/           controls, notices, result cards, explanation UI
-  data/                 fictional records and conditional question definitions
-  pages/                four primary screens
-  repositories/         fixture adapter for later real-data integration
-  styles/               CSS variables, base styles, shared layout patterns
-tests/
-  unit/                 answer validation, branching, normalization, adapter behavior
-  journey/              production-browser workflows and accessibility checks
-docs/
-  screenshots/          desktop and mobile screenshots of all four screens
+SchemeLog/
+  client/       React/Vite frontend, dependencies and browser tests
+  server/       catalogue data, validation, build scripts and source tooling
+    sources/    exact-URL registry; snapshots/text after approved checks
+  docs/         review notes and implementation handoff
+  .github/      repository checks
+  README.md
 ```
-
-Styling uses standard CSS files with CSS custom properties, component-prefixed classes, Grid, Flexbox, and responsive media queries. No CSS framework is required.
 
 ## Checks
 
 ```sh
 npm test
+npm run validate:catalogue
+npm run validate:registry
 npm run build
-npx playwright install chromium
+npm run preview
+npm run format:check
+```
+
+Builds and unit tests do not fetch official sites. Catalogue assembly excludes drafts, archives and
+quarantined records, then writes the envelope to client and server data folders. Source hash changes
+conservatively withhold a whole record until re-review; fine-grained engine integration is deferred.
+
+Browser tests require a build and Chromium:
+
+```sh
+npm exec --prefix client -- playwright install chromium
+npm run build
 npm run test:e2e
 ```
 
-The browser tests use the production preview server and cover the journey at desktop and 360 px mobile widths, correction of invalid percentages, conditional answer clearing, stale-answer messaging, unknown answers, empty/error scenarios, filter behavior, direct routes, checkbox persistence/reset, storage checks, official destination attributes, and automated accessibility scans. Additional checks cover tablet layout, 640 px reflow, reduced motion, and page anchors. Test screenshots are written to `docs/screenshots/`.
+## Human publication gate
 
-Automated accessibility checks supplement human review; they are not a claim of complete WCAG conformance. See [validation notes](docs/VALIDATION.md) for the actual results and remaining limitations.
+1. Correct draft facts against official guidelines with precise locators.
+2. Fill verification notes; a different person checks every material fact and destination.
+3. Read robots, terms and copyright policy; add approved exact URLs to the registry.
+4. Record genuine curator/reviewer identities and dates, then mark the record published.
+5. Bump `server/src/data/release.json` with a date-counter version and actual IST release timestamp.
+6. Validate, build and inspect coverage before reviewing the change.
 
-## Screenshots
+Explicit release metadata keeps repeated builds reproducible. The initial version identifies an
+empty development snapshot, not a verified release. Fixture records must never be published.
 
-| Screen                | Desktop                                               | Mobile                                               |
-| --------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
-| Landing               | [View](docs/screenshots/01-landing-desktop.png)       | [View](docs/screenshots/01-landing-mobile.png)       |
-| Questionnaire         | [View](docs/screenshots/02-questionnaire-desktop.png) | [View](docs/screenshots/02-questionnaire-mobile.png) |
-| Results               | [View](docs/screenshots/03-results-desktop.png)       | [View](docs/screenshots/03-results-mobile.png)       |
-| Details and checklist | [View](docs/screenshots/04-details-desktop.png)       | [View](docs/screenshots/04-details-mobile.png)       |
+## Opt-in source checks
 
-## Later phases
+```sh
+npm run sources -- --all
+npm run sources:fetch -- --source src-approved-id
+npm run sources:extract
+npm run sources:report
+```
 
-Source verification and the real catalogue belong to Phase 2; the deterministic matching engine belongs to Phase 3; real-data integration belongs to Phase 4. Replace the repository adapter and assessment provider without embedding rules in UI components. A deployed static host will need a fallback to `index.html` for client-side routes. Final hosting setup belongs to Phase 5.
+The registry starts empty because no real human URL/terms approval has been supplied. These commands
+make no requests until a reviewed registry change is added. Raw bytes remain in the gitignored
+`server/.cache/sources/`. Source tooling is never imported by the frontend and never approves facts.
+
+## Privacy and remaining work
+
+Answers remain in React memory; there are no accounts, analytics, uploads or profile network requests.
+The Phase 1 questionnaire still uses its demo answer format; real contract integration is deferred.
+See [the handoff](docs/PHASE2-STATUS.md) and [research notes](docs/verification/) before publishing.

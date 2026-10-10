@@ -1,0 +1,310 @@
+{
+  "id": "sch-pm-usp-csss",
+  "slug": "pm-usp-central-sector-scheme-of-scholarship",
+  "officialName": "Central Sector Scheme of Scholarship for College and University Students (PM-USP CSSS)",
+  "shortName": "PM-USP CSSS",
+  "domain": "student-scholarship",
+  "authority": {
+    "name": "Ministry of Education, Government of India",
+    "level": "central"
+  },
+  "jurisdiction": "central",
+  "applicableStates": "all",
+  "summary": "Merit scholarship for students above the 80th percentile in their Class XII board, pursuing a regular degree course, with family income up to Rs 4.5 lakh a year.",
+  "benefits": [
+    {
+      "id": "ben-graduation",
+      "type": "maintenance",
+      "description": "Scholarship at graduation level for the first three years of a college or university course",
+      "amount": {
+        "value": 12000,
+        "currency": "INR",
+        "frequency": "year"
+      },
+      "conditions": "Students pursuing technical courses such as B.Tech or B.Engg receive this rate for the 1st, 2nd and 3rd year.",
+      "evidence": ["src-csss-guidelines#loc-rate"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    },
+    {
+      "id": "ben-postgraduation",
+      "type": "maintenance",
+      "description": "Scholarship at post-graduation level",
+      "amount": {
+        "value": 20000,
+        "currency": "INR",
+        "frequency": "year"
+      },
+      "conditions": "Students on five-year or integrated professional courses receive this rate in the 4th and 5th year; students on technical courses such as B.Tech receive it in the 4th year.",
+      "evidence": ["src-csss-guidelines#loc-rate"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    }
+  ],
+  "eligibility": {
+    "coverage": "partial",
+    "cycle": "2026-27",
+    "notes": "Research draft only. Current-cycle applicability, exact conditions, exceptions, document wording, and completeness require independent human review. Do not use for student assessments.",
+    "evidence": ["src-csss-guidelines#loc-eligibility"],
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2027-04-01"
+    },
+    "rule": {
+      "id": "r-root",
+      "operator": "allOf",
+      "explanationKey": "root.allOf",
+      "evidence": ["src-csss-guidelines#loc-eligibility"],
+      "children": [
+        {
+          "id": "r-percentile",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "The scheme requires a student to be above the 80th percentile of successful candidates in the relevant stream from their own Board of Examination in Class XII. That percentile depends on board-wide results, not on a student's own marks.",
+          "checkHint": "Check your board's merit list or the National Scholarship Portal for your stream's cut-off.",
+          "explanationKey": "manual.percentile",
+          "evidence": ["src-csss-guidelines#loc-eligibility"]
+        },
+        {
+          "id": "r-level",
+          "operator": "in",
+          "field": "educationLevel",
+          "value": ["undergraduate", "postgraduate"],
+          "material": true,
+          "explanationKey": "level.in",
+          "evidence": ["src-csss-guidelines#loc-eligibility"]
+        },
+        {
+          "id": "r-regular-course",
+          "operator": "eq",
+          "field": "additionalAnswers.isRegularFullTimeStudent",
+          "value": "yes",
+          "material": true,
+          "explanationKey": "course.regular",
+          "evidence": ["src-csss-guidelines#loc-eligibility"]
+        },
+        {
+          "id": "r-not-distance",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.distanceMode",
+          "evidence": ["src-csss-guidelines#loc-eligibility"],
+          "child": {
+            "id": "r-distance-mode",
+            "operator": "eq",
+            "field": "additionalAnswers.studiesThroughDistanceMode",
+            "value": "yes",
+            "explanationKey": "distance.eq",
+            "evidence": ["src-csss-guidelines#loc-eligibility"]
+          }
+        },
+        {
+          "id": "r-income",
+          "operator": "lte",
+          "field": "annualHouseholdIncome",
+          "value": 450000,
+          "unit": "INR/year",
+          "material": true,
+          "explanationKey": "income.lte",
+          "evidence": ["src-csss-guidelines#loc-income"]
+        },
+        {
+          "id": "r-no-other-scholarship",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.otherScholarship",
+          "evidence": ["src-csss-guidelines#loc-exclusion"],
+          "child": {
+            "id": "r-other-scholarship",
+            "operator": "eq",
+            "field": "additionalAnswers.receivesOtherScholarship",
+            "value": "yes",
+            "explanationKey": "other.eq",
+            "evidence": ["src-csss-guidelines#loc-exclusion"]
+          }
+        },
+        {
+          "id": "r-institution-recognised",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "The course must be at a college or institution recognised by the All India Council for Technical Education and the respective regulatory bodies concerned, and the institution must hold a valid AISHE code.",
+          "checkHint": "Confirm your institution's AISHE code at aishe.gov.in and ask your institution about its recognition.",
+          "explanationKey": "manual.institution",
+          "evidence": ["src-csss-guidelines#loc-eligibility"]
+        }
+      ]
+    }
+  },
+  "documents": [
+    {
+      "id": "doc-income-certificate",
+      "type": "income-certificate",
+      "title": "Income certificate",
+      "requirement": "conditional",
+      "notes": "The guidelines state that an income certificate is required only for fresh applicants.",
+      "appliesWhen": {
+        "id": "r-doc-income-fresh",
+        "operator": "lte",
+        "field": "annualHouseholdIncome",
+        "value": 450000,
+        "unit": "INR/year",
+        "explanationKey": "doc.income",
+        "evidence": ["src-csss-guidelines#loc-income"]
+      },
+      "evidence": ["src-csss-guidelines#loc-income"]
+    },
+    {
+      "id": "doc-marksheet",
+      "type": "marksheet",
+      "title": "Class XII board examination result",
+      "requirement": "needs-verification",
+      "appliesWhen": null,
+      "notes": "The guidelines base selection on Class XII board results and verify credentials through DigiLocker, but they do not list the documents a student uploads. Check the National Scholarship Portal for the current document list.",
+      "evidence": ["src-csss-guidelines#loc-application"]
+    },
+    {
+      "id": "doc-bank-details",
+      "type": "bank-details-for-portal",
+      "title": "Bank account in the student's own name, for Direct Benefit Transfer",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "notes": "Prepare this for the official portal only. Schemelog never asks for account numbers.",
+      "evidence": ["src-csss-guidelines#loc-payment"]
+    }
+  ],
+  "application": {
+    "cycle": "2026-27",
+    "opens": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "closes": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2026-10-17"
+    }
+  },
+  "applicationSteps": [
+    {
+      "order": 1,
+      "title": "Read the current guidelines and the timelines published on the National Scholarship Portal",
+      "description": "The guidelines state that the portal provides the opening and closing timelines, and that the latest timeline guidance is published there.",
+      "evidence": ["src-csss-guidelines#loc-application"]
+    },
+    {
+      "order": 2,
+      "title": "Apply online on the National Scholarship Portal",
+      "description": "Applications are received online only. Credentials such as category and educational qualifications are verified through DigiLocker.",
+      "evidence": ["src-csss-guidelines#loc-application"]
+    },
+    {
+      "order": 3,
+      "title": "Have your application verified by your institution, then by the state authority",
+      "description": "Online applications are verified at two levels: by the institution where the student is studying, and then by the concerned State Higher Education Department or the nominated State Nodal Agency.",
+      "evidence": ["src-csss-guidelines#loc-application"]
+    }
+  ],
+  "links": [
+    {
+      "id": "lnk-guidelines",
+      "purpose": "guidelines",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/CSSS_GUIDLINES_07022024_updated.pdf",
+      "label": "Official PM-USP CSSS guidelines (PDF)",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    },
+    {
+      "id": "lnk-application",
+      "purpose": "application",
+      "url": "https://scholarships.gov.in/",
+      "label": "National Scholarship Portal",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-csss-guidelines",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/CSSS_GUIDLINES_07022024_updated.pdf",
+      "title": "Pradhan Mantri Uchchatar Shiksha Protsahan (PM-USP) Yojana — Guidelines for the component scheme Central Sector Scheme of Scholarship for College and University Students (PM-USP CSSS)",
+      "authority": "Ministry of Education, Government of India",
+      "kind": "guidelines",
+      "edition": "Applicable for academic year 2022-23 onwards",
+      "retrievedAt": "2026-10-10",
+      "locators": [
+        {
+          "id": "loc-objective",
+          "ref": "p.1, §1 Objective"
+        },
+        {
+          "id": "loc-scope",
+          "ref": "p.1, §2 Scope"
+        },
+        {
+          "id": "loc-eligibility",
+          "ref": "p.1-2, §4 Eligibility for Scholarship, items i-iv and vi"
+        },
+        {
+          "id": "loc-income",
+          "ref": "p.2, §4 item v"
+        },
+        {
+          "id": "loc-exclusion",
+          "ref": "p.2, §4 item iv"
+        },
+        {
+          "id": "loc-application",
+          "ref": "p.3, §6 Procedure for Application"
+        },
+        {
+          "id": "loc-rate",
+          "ref": "p.3, §7 Rate and Duration of Scholarship"
+        },
+        {
+          "id": "loc-payment",
+          "ref": "p.3, §8 Payment of Scholarship"
+        }
+      ]
+    },
+    {
+      "id": "src-csss-nsp-portal",
+      "url": "https://scholarships.gov.in/",
+      "title": "National Scholarship Portal — home page announcements, academic year 2026-27",
+      "authority": "Ministry of Electronics and Information Technology, Government of India",
+      "kind": "portal-page",
+      "edition": "2026-27",
+      "retrievedAt": "2026-10-10",
+      "locators": [
+        {
+          "id": "loc-announcement",
+          "ref": "Announcements, Students tab"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "curatedBy": "ai-assisted-research",
+    "curatedAt": "2026-10-10",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "conflicts": [],
+    "notesPath": "docs/verification/sch-pm-usp-csss.md"
+  },
+  "publicationStatus": "draft",
+  "recordVersion": 1
+}

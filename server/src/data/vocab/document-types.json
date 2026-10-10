@@ -1,0 +1,24 @@
+{
+  "vocabulary": "document-types",
+  "vocabVersion": "1.0.0",
+  "description": "Document categories. The title on each record keeps the scheme's own wording. Schemelog never collects or stores any document.",
+  "entries": [
+    { "code": "income-certificate", "label": "Income certificate" },
+    { "code": "domicile-certificate", "label": "Domicile or residence certificate" },
+    { "code": "marksheet", "label": "Marksheet or result" },
+    { "code": "bonafide-certificate", "label": "Bonafide or admission certificate" },
+    { "code": "category-certificate", "label": "Category certificate" },
+    { "code": "fee-receipt", "label": "Fee receipt" },
+    {
+      "code": "bank-details-for-portal",
+      "label": "Bank details, prepared for the official portal",
+      "description": "Shown only as a preparation note. Schemelog never asks for account numbers."
+    },
+    {
+      "code": "identity-document-for-portal",
+      "label": "Identity document, prepared for the official portal",
+      "description": "Shown only as a preparation note. Schemelog never asks for Aadhaar or any identity number."
+    },
+    { "code": "other", "label": "Other document" }
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "id": "sch-pm-usp-sss-jk-ladakh",
+  "slug": "pm-usp-special-scholarship-jk-ladakh",
+  "officialName": "Special Scholarship Scheme for the Students of Union Territories of Jammu & Kashmir and Ladakh (SSS J&K and Ladakh) under the Pradhan Mantri Uchchatar Shiksha Protsahan (PM-USP) Yojana",
+  "shortName": "PM-USP SSS J&K and Ladakh",
+  "domain": "student-scholarship",
+  "authority": {
+    "name": "Scholarships Division, Department of Higher Education, Ministry of Education, Government of India",
+    "level": "central"
+  },
+  "jurisdiction": "state",
+  "applicableStates": ["IN-JK", "IN-LA"],
+  "summary": "Academic fee and a fixed maintenance allowance for students domiciled in Jammu & Kashmir or Ladakh who study outside the two union territories, with family income up to Rs 8 lakh a year.",
+  "benefits": [
+    {
+      "id": "ben-maintenance",
+      "type": "maintenance",
+      "description": "Fixed maintenance allowance towards hostel and mess fees, books, and other incidental charges, paid to the student by Direct Benefit Transfer",
+      "amount": {
+        "value": 100000,
+        "currency": "INR",
+        "frequency": "year",
+        "cap": "Not exceeding Rs 1.00 lakh per annum. First-year payment is in nine instalments: Rs 20,000 then eight monthly instalments of Rs 10,000. From the second year it is ten monthly instalments of Rs 10,000."
+      },
+      "evidence": ["src-sssjkl-specifications#loc-rates"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    },
+    {
+      "id": "ben-fee-general",
+      "type": "tuition-fee",
+      "description": "Academic fee for a General Degree course, paid directly to the institution",
+      "amount": {
+        "value": 30000,
+        "currency": "INR",
+        "frequency": "year",
+        "cap": "Upper limit. Paid as per claim, or as per the rate fixed by the relevant fee regulatory authority, whichever is less."
+      },
+      "evidence": ["src-sssjkl-specifications#loc-rates"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    },
+    {
+      "id": "ben-fee-professional",
+      "type": "tuition-fee",
+      "description": "Academic fee for a Professional or Engineering stream course, paid directly to the institution",
+      "amount": {
+        "value": 125000,
+        "currency": "INR",
+        "frequency": "year",
+        "cap": "Upper limit inclusive of all admissible components. An institution may not charge the student any amount above this ceiling."
+      },
+      "evidence": ["src-sssjkl-specifications#loc-rates"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    },
+    {
+      "id": "ben-fee-medical",
+      "type": "tuition-fee",
+      "description": "Academic fee for a Medical stream course, paid directly to the institution",
+      "amount": {
+        "value": 300000,
+        "currency": "INR",
+        "frequency": "year",
+        "cap": "Upper limit for the Medical stream, subject to NEET where applicable."
+      },
+      "evidence": ["src-sssjkl-specifications#loc-rates"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    }
+  ],
+  "eligibility": {
+    "coverage": "partial",
+    "cycle": "2025-26",
+    "notes": "Research draft only. Current-cycle applicability, exact conditions, exceptions, document wording, and completeness require independent human review. Do not use for student assessments.",
+    "evidence": ["src-sssjkl-specifications#loc-eligibility"],
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2027-04-01"
+    },
+    "rule": {
+      "id": "r-root",
+      "operator": "allOf",
+      "explanationKey": "root.allOf",
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"],
+      "children": [
+        {
+          "id": "r-domicile",
+          "operator": "in",
+          "field": "domicileState",
+          "value": ["IN-JK", "IN-LA"],
+          "material": true,
+          "explanationKey": "domicile.in",
+          "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+        },
+        {
+          "id": "r-income",
+          "operator": "lte",
+          "field": "annualHouseholdIncome",
+          "value": 800000,
+          "unit": "INR/year",
+          "material": true,
+          "explanationKey": "income.lte",
+          "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+        },
+        {
+          "id": "r-entry-route",
+          "operator": "anyOf",
+          "material": true,
+          "explanationKey": "entryRoute.anyOf",
+          "evidence": ["src-sssjkl-specifications#loc-eligibility"],
+          "children": [
+            {
+              "id": "r-entry-class-twelve",
+              "operator": "manualVerification",
+              "reason": "Standard entry requires a student to have passed the Class XII examination from a JKBOSE or CBSE affiliated school located in the union territories of Jammu & Kashmir or Ladakh.",
+              "checkHint": "Confirm that your Class XII board and school location meet this condition.",
+              "explanationKey": "manual.classTwelveBoard",
+              "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+            },
+            {
+              "id": "r-entry-lateral",
+              "operator": "manualVerification",
+              "reason": "Lateral entry requires a Diploma in Engineering from a polytechnic institute recognised by the Directorate of Technical Education of the union territories of Jammu & Kashmir or Ladakh, and is subject to seat availability in the Engineering stream.",
+              "checkHint": "Confirm that your polytechnic is recognised by the Directorate of Technical Education, and check seat availability on the AICTE portal.",
+              "explanationKey": "manual.lateralEntry",
+              "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+            }
+          ]
+        },
+        {
+          "id": "r-not-postgraduate",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.postgraduate",
+          "evidence": ["src-sssjkl-specifications#loc-exclusions"],
+          "child": {
+            "id": "r-postgraduate",
+            "operator": "eq",
+            "field": "educationLevel",
+            "value": "postgraduate",
+            "explanationKey": "level.eq",
+            "evidence": ["src-sssjkl-specifications#loc-exclusions"]
+          }
+        },
+        {
+          "id": "r-not-diploma",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.diploma",
+          "evidence": ["src-sssjkl-specifications#loc-exclusions"],
+          "child": {
+            "id": "r-diploma",
+            "operator": "eq",
+            "field": "educationLevel",
+            "value": "diploma-technical",
+            "explanationKey": "level.eq",
+            "evidence": ["src-sssjkl-specifications#loc-exclusions"]
+          }
+        },
+        {
+          "id": "r-not-open-university",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.openUniversity",
+          "evidence": ["src-sssjkl-specifications#loc-exclusions"],
+          "child": {
+            "id": "r-open-university",
+            "operator": "eq",
+            "field": "additionalAnswers.studiesThroughDistanceMode",
+            "value": "yes",
+            "explanationKey": "distance.eq",
+            "evidence": ["src-sssjkl-specifications#loc-exclusions"]
+          }
+        },
+        {
+          "id": "r-no-other-scholarship",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.otherScholarship",
+          "evidence": ["src-sssjkl-specifications#loc-exclusions"],
+          "child": {
+            "id": "r-other-scholarship",
+            "operator": "eq",
+            "field": "additionalAnswers.receivesOtherScholarship",
+            "value": "yes",
+            "explanationKey": "other.eq",
+            "evidence": ["src-sssjkl-specifications#loc-exclusions"]
+          }
+        },
+        {
+          "id": "r-institution-criteria",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "The scholarship applies only at institutions outside the two union territories that meet one of the criteria set by the Inter-Ministerial Committee: NAAC accreditation grade 3.0, a place in the NIRF top 100, AICTE approval with NBA accreditation of 30 per cent or more courses, more than 80 per cent admission in each of the last five academic years, or being a government institution. Admission through management quota or through agents is excluded.",
+          "checkHint": "Check the list of participating institutions on the AICTE portal before choosing a college.",
+          "explanationKey": "manual.institutionCriteria",
+          "evidence": ["src-sssjkl-specifications#loc-institutions"]
+        },
+        {
+          "id": "r-aicte-counselling",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "A candidate must apply online on the AICTE web portal and verify their documents at a facilitation centre in Jammu & Kashmir or Ladakh within the stated time frame; admission is through the AICTE counselling process under the supernumerary quota.",
+          "checkHint": "Register on the AICTE portal and locate your nearest facilitation centre before the deadline.",
+          "explanationKey": "manual.aicteCounselling",
+          "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+        }
+      ]
+    }
+  },
+  "documents": [
+    {
+      "id": "doc-domicile-certificate",
+      "type": "domicile-certificate",
+      "title": "Proof of domicile of the union territories of Jammu & Kashmir or Ladakh",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "notes": "Documents are verified at a facilitation centre in Jammu & Kashmir or Ladakh. The specifications state the domicile condition but do not name the issuing authority.",
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    },
+    {
+      "id": "doc-income-certificate",
+      "type": "income-certificate",
+      "title": "Proof of family income of Rs 8.00 lakh or less per annum",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    },
+    {
+      "id": "doc-class-twelve-marksheet",
+      "type": "marksheet",
+      "title": "Class XII marksheet from JKBOSE or a CBSE-affiliated school in J&K or Ladakh",
+      "requirement": "conditional",
+      "notes": "Required on the standard entry route. Lateral-entry candidates present their Diploma in Engineering instead.",
+      "appliesWhen": {
+        "id": "r-doc-class-twelve",
+        "operator": "in",
+        "field": "educationLevel",
+        "value": ["undergraduate"],
+        "explanationKey": "doc.classTwelve",
+        "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+      },
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    },
+    {
+      "id": "doc-bank-details",
+      "type": "bank-details-for-portal",
+      "title": "Bank account for the maintenance allowance, paid through DBT via PFMS",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "notes": "Prepare this for the official portal only. Schemelog never asks for account numbers.",
+      "evidence": ["src-sssjkl-specifications#loc-disbursement"]
+    }
+  ],
+  "application": {
+    "cycle": "2025-26",
+    "opens": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "closes": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2026-10-17"
+    }
+  },
+  "applicationSteps": [
+    {
+      "order": 1,
+      "title": "Apply online on the AICTE web portal",
+      "description": "Candidates are compulsorily required to apply online on the AICTE portal within the stated time frame.",
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    },
+    {
+      "order": 2,
+      "title": "Verify your documents at a facilitation centre in J&K or Ladakh",
+      "description": "Document verification happens at the nearest facilitation centre, within the time frame set for the cycle.",
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    },
+    {
+      "order": 3,
+      "title": "Take part in online counselling for seat allotment",
+      "description": "A merit list is displayed on the student portal, and seats in participating colleges are allotted through online counselling subject to choice filling and scholarship availability.",
+      "evidence": ["src-sssjkl-specifications#loc-eligibility"]
+    }
+  ],
+  "links": [
+    {
+      "id": "lnk-guidelines",
+      "purpose": "guidelines",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/PM_USPY(SSSJKL)SchemeSpecifications.pdf",
+      "label": "Official scheme specifications for 2025-26 (PDF)",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    },
+    {
+      "id": "lnk-application",
+      "purpose": "application",
+      "url": "https://scholarships.gov.in/",
+      "label": "National Scholarship Portal",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-sssjkl-specifications",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/PM_USPY(SSSJKL)SchemeSpecifications.pdf",
+      "title": "Special Scholarship Scheme for the Students of Union Territories of Jammu & Kashmir and Ladakh (SSS J&K and Ladakh) under the PM-USP Yojana during academic year 2025-2026",
+      "authority": "Scholarships Division, Department of Higher Education, Ministry of Education, Government of India",
+      "kind": "guidelines",
+      "edition": "Academic year 2025-2026",
+      "retrievedAt": "2026-10-10",
+      "locators": [
+        {
+          "id": "loc-objective",
+          "ref": "p.1, §2 Objective"
+        },
+        {
+          "id": "loc-scope",
+          "ref": "p.1, §3 Scope"
+        },
+        {
+          "id": "loc-rates",
+          "ref": "p.1, §4 Rate of scholarships, academic fee and maintenance allowance per annum"
+        },
+        {
+          "id": "loc-disbursement",
+          "ref": "p.2, §5 Disbursement of scholarship"
+        },
+        {
+          "id": "loc-eligibility",
+          "ref": "p.2, §6 Eligibility, items i-vii"
+        },
+        {
+          "id": "loc-exclusions",
+          "ref": "p.2, §7 Exclusions, items i-ix"
+        },
+        {
+          "id": "loc-institutions",
+          "ref": "p.2-3, §8 Institutes / colleges participating"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "curatedBy": "ai-assisted-research",
+    "curatedAt": "2026-10-10",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "conflicts": [
+      {
+        "fact": "Applicable cycle",
+        "sources": ["src-sssjkl-specifications", "src-sssjkl-specifications#loc-scope"],
+        "values": [
+          "Scheme specifications titled for academic year 2025-2026",
+          "National Scholarship Portal is open for academic year 2026-27"
+        ],
+        "resolution": "The cycle is recorded as 2025-26, exactly as the specifications state. No 2026-27 specification document was found, so no facts are carried forward to the newer cycle."
+      }
+    ],
+    "notesPath": "docs/verification/sch-pm-usp-sss-jk-ladakh.md"
+  },
+  "publicationStatus": "draft",
+  "recordVersion": 1
+}

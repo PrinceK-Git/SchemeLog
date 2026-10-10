@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemelog.example/schema/scheme.schema.json",
+  "title": "Schemelog scheme record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "slug",
+    "officialName",
+    "domain",
+    "authority",
+    "jurisdiction",
+    "applicableStates",
+    "summary",
+    "benefits",
+    "eligibility",
+    "documents",
+    "application",
+    "links",
+    "sources",
+    "verification",
+    "publicationStatus",
+    "recordVersion"
+  ],
+  "properties": {
+    "id": { "$ref": "#/$defs/schemeId" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "minLength": 3 },
+    "officialName": { "$ref": "#/$defs/safeText", "minLength": 3 },
+    "shortName": { "$ref": "#/$defs/safeText" },
+    "domain": { "const": "student-scholarship" },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "level"],
+      "properties": {
+        "name": { "$ref": "#/$defs/safeText", "minLength": 2 },
+        "level": { "enum": ["central", "state", "unknown"] }
+      }
+    },
+    "jurisdiction": { "enum": ["central", "state", "unknown"] },
+    "applicableStates": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^IN-[A-Z]{2}$" }
+        },
+        { "const": "all" },
+        { "$ref": "#/$defs/unknown" }
+      ]
+    },
+    "summary": { "$ref": "#/$defs/safeText", "minLength": 20, "maxLength": 280 },
+    "benefits": { "type": "array", "items": { "$ref": "#/$defs/benefit" } },
+    "eligibility": { "$ref": "#/$defs/eligibility" },
+    "documents": { "type": "array", "items": { "$ref": "#/$defs/documentItem" } },
+    "application": { "$ref": "#/$defs/application" },
+    "applicationSteps": { "type": "array", "items": { "$ref": "#/$defs/step" } },
+    "links": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/link" } },
+    "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/source" } },
+    "verification": { "$ref": "#/$defs/verification" },
+    "publicationStatus": { "enum": ["draft", "published", "archived"] },
+    "recordVersion": { "type": "integer", "minimum": 1 }
+  },
+  "$defs": {
+    "schemeId": { "type": "string", "pattern": "^(fx-)?sch-[a-z0-9]+(-[a-z0-9]+)*$" },
+    "safeText": { "type": "string", "pattern": "^[^<>]*$" },
+    "isoDate": { "type": "string", "format": "date" },
+    "person": { "type": "string", "minLength": 2, "pattern": "^[^<>]*\\S[^<>]*$" },
+    "cycle": { "type": "string", "minLength": 4, "pattern": "^[^<>]+$" },
+    "evidenceRef": { "type": "string", "pattern": "^src-[a-z0-9-]+(#loc-[a-z0-9-]+)?$" },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" } },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reason"],
+      "properties": {
+        "state": { "const": "unknown" },
+        "reason": { "enum": ["not-found", "source-conflict", "needs-interpretation", "stale"] }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "checkedAt", "checkedBy"],
+      "properties": {
+        "state": { "enum": ["current", "review-due", "superseded", "unknown"] },
+        "checkedAt": { "$ref": "#/$defs/isoDate" },
+        "checkedBy": { "$ref": "#/$defs/person" },
+        "reviewDue": { "$ref": "#/$defs/isoDate" }
+      }
+    },
+    "dateValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "precision", "evidence", "checkedAt"],
+      "allOf": [
+        {
+          "if": { "properties": { "precision": { "const": "date" } } },
+          "then": { "properties": { "value": { "format": "date" } } },
+          "else": { "properties": { "value": { "format": "date-time" } } }
+        }
+      ],
+      "properties": {
+        "value": { "type": "string", "minLength": 10 },
+        "precision": { "enum": ["date", "datetime"] },
+        "timezone": { "type": "string", "minLength": 3 },
+        "cycle": { "$ref": "#/$defs/cycle" },
+        "evidence": { "$ref": "#/$defs/evidence", "minItems": 1 },
+        "checkedAt": { "$ref": "#/$defs/isoDate" }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "operator", "explanationKey"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^r-[a-z0-9]+(-[a-z0-9]+)*$" },
+        "operator": {
+          "enum": [
+            "eq",
+            "in",
+            "lte",
+            "lt",
+            "gte",
+            "gt",
+            "between",
+            "allOf",
+            "anyOf",
+            "not",
+            "manualVerification"
+          ]
+        },
+        "field": { "type": "string", "minLength": 2 },
+        "value": true,
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "minInclusive": { "type": "boolean" },
+        "maxInclusive": { "type": "boolean" },
+        "unit": { "type": "string" },
+        "scale": { "type": "string" },
+        "context": { "type": "string" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
+        "child": { "$ref": "#/$defs/rule" },
+        "reason": { "$ref": "#/$defs/safeText" },
+        "checkHint": { "$ref": "#/$defs/safeText" },
+        "explanationKey": { "type": "string", "pattern": "^[a-zA-Z0-9.\\-_]+$" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "material": { "type": "boolean" },
+        "freshness": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "benefit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "description", "amount", "evidence", "freshness"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^ben-[a-z0-9-]+$" },
+        "type": { "enum": ["tuition-fee", "maintenance", "one-time-grant", "stipend", "other"] },
+        "description": { "$ref": "#/$defs/safeText", "minLength": 3 },
+        "amount": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["value", "currency", "frequency"],
+              "properties": {
+                "value": { "type": "number", "exclusiveMinimum": 0 },
+                "currency": { "const": "INR" },
+                "frequency": { "enum": ["year", "month", "one-time"] },
+                "cap": { "$ref": "#/$defs/safeText" }
+              }
+            },
+            { "$ref": "#/$defs/unknown" }
+          ]
+        },
+        "conditions": { "$ref": "#/$defs/safeText" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "freshness": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage", "cycle", "rule", "evidence", "freshness"],
+      "properties": {
+        "coverage": { "enum": ["complete", "partial", "unusable"] },
+        "cycle": { "$ref": "#/$defs/cycle" },
+        "rule": { "oneOf": [{ "$ref": "#/$defs/rule" }, { "type": "null" }] },
+        "notes": { "$ref": "#/$defs/safeText" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "freshness": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "documentItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title", "requirement", "appliesWhen", "evidence"],
+      "allOf": [
+        {
+          "if": { "properties": { "requirement": { "const": "conditional" } } },
+          "then": { "properties": { "appliesWhen": { "$ref": "#/$defs/rule" } } },
+          "else": { "properties": { "appliesWhen": { "type": "null" } } }
+        }
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^doc-[a-z0-9-]+$" },
+        "type": { "type": "string", "minLength": 2 },
+        "title": { "$ref": "#/$defs/safeText", "minLength": 2 },
+        "requirement": { "enum": ["confirmed", "conditional", "needs-verification"] },
+        "appliesWhen": { "oneOf": [{ "$ref": "#/$defs/rule" }, { "type": "null" }] },
+        "notes": { "$ref": "#/$defs/safeText" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cycle", "opens", "closes", "freshness"],
+      "properties": {
+        "cycle": { "$ref": "#/$defs/cycle" },
+        "opens": { "oneOf": [{ "$ref": "#/$defs/dateValue" }, { "$ref": "#/$defs/unknown" }] },
+        "closes": { "oneOf": [{ "$ref": "#/$defs/dateValue" }, { "$ref": "#/$defs/unknown" }] },
+        "statusOverride": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "evidence", "checkedAt"],
+          "properties": {
+            "status": { "enum": ["open", "closed"] },
+            "evidence": { "$ref": "#/$defs/evidence", "minItems": 1 },
+            "checkedAt": { "$ref": "#/$defs/isoDate" }
+          }
+        },
+        "freshness": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "title", "evidence"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "title": { "$ref": "#/$defs/safeText", "minLength": 3 },
+        "description": { "$ref": "#/$defs/safeText" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "purpose", "url", "label", "checkedAt", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^lnk-[a-z0-9-]+$" },
+        "purpose": { "enum": ["scheme-info", "guidelines", "application"] },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "label": { "$ref": "#/$defs/safeText", "minLength": 3 },
+        "checkedAt": { "$ref": "#/$defs/isoDate" },
+        "status": { "enum": ["verified", "broken", "unverified"] }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "url", "title", "authority", "kind", "edition", "retrievedAt", "locators"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^src-[a-z0-9-]+$" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "title": { "$ref": "#/$defs/safeText", "minLength": 3 },
+        "authority": { "$ref": "#/$defs/safeText", "minLength": 2 },
+        "kind": { "enum": ["guidelines", "notice", "scheme-page", "portal-page", "faq"] },
+        "edition": {
+          "oneOf": [{ "$ref": "#/$defs/safeText", "minLength": 1 }, { "$ref": "#/$defs/unknown" }]
+        },
+        "retrievedAt": { "$ref": "#/$defs/isoDate" },
+        "textSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "locators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "ref"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^loc-[a-z0-9-]+$" },
+              "ref": { "$ref": "#/$defs/safeText", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["curatedBy", "curatedAt", "reviewedBy", "reviewedAt", "conflicts", "notesPath"],
+      "properties": {
+        "curatedBy": { "$ref": "#/$defs/person" },
+        "curatedAt": { "$ref": "#/$defs/isoDate" },
+        "reviewedBy": { "oneOf": [{ "$ref": "#/$defs/person" }, { "type": "null" }] },
+        "reviewedAt": { "oneOf": [{ "$ref": "#/$defs/isoDate" }, { "type": "null" }] },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fact", "sources", "values", "resolution"],
+            "properties": {
+              "fact": { "$ref": "#/$defs/safeText" },
+              "sources": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "$ref": "#/$defs/evidenceRef" }
+              },
+              "values": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/safeText" } },
+              "resolution": { "$ref": "#/$defs/safeText" }
+            }
+          }
+        },
+        "notesPath": { "type": "string", "minLength": 5 }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "vocabulary": "exam-contexts",
+  "vocabVersion": "1.0.0",
+  "description": "Which examination a score refers to. A scheme rule must name its context; a profile score with a different context evaluates unknown.",
+  "entries": [
+    { "code": "class-10-board", "label": "Class 10 board examination" },
+    { "code": "class-12-board", "label": "Class 12 board examination" },
+    { "code": "previous-year", "label": "Previous year or semester of the current course" },
+    { "code": "qualifying-exam", "label": "Qualifying examination for the current course" }
+  ]
+}

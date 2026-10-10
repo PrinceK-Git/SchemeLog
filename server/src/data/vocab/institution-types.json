@@ -1,0 +1,15 @@
+{
+  "vocabulary": "institution-types",
+  "vocabVersion": "1.0.0",
+  "description": "Institution ownership type. Recognition or accreditation stays a manual check unless a scheme rule defines it precisely.",
+  "entries": [
+    { "code": "govt", "label": "Government institution" },
+    { "code": "govt-aided", "label": "Government-aided institution" },
+    {
+      "code": "private-recognised",
+      "label": "Private institution, recognised by the relevant authority"
+    },
+    { "code": "private-other", "label": "Private institution, recognition unknown" },
+    { "code": "other", "label": "Other" }
+  ]
+}

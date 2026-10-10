@@ -18,10 +18,10 @@ async function accessibility(page) {
   );
 }
 async function screenshot(page, name, project) {
-  await mkdir('docs/screenshots', { recursive: true });
+  await mkdir('../docs/screenshots', { recursive: true });
   await page.locator('h1').focus();
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-  await page.screenshot({ path: `docs/screenshots/${name}-${project}.png`, fullPage: true });
+  await page.screenshot({ path: `../docs/screenshots/${name}-${project}.png`, fullPage: true });
 }
 async function enterProfile(page) {
   await page.goto('/questionnaire');

@@ -1,30 +1,26 @@
 {
-  "name": "schemelog",
+  "name": "schemelog-project",
+  "version": "0.2.0",
   "private": true,
-  "version": "0.1.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test tests/unit/*.test.js",
-    "test:e2e": "playwright test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
   "engines": {
     "node": ">=22.12.0"
   },
-  "dependencies": {
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-router-dom": "^7.18.4"
-  },
-  "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.64.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "prettier": "^3.9.9",
-    "vite": "^8.3.4"
+  "scripts": {
+    "setup": "npm ci --prefix client && npm ci --prefix server",
+    "dev": "npm run dev --prefix client",
+    "preview": "npm run preview --prefix client --",
+    "validate:catalogue": "npm run validate:catalogue --prefix server --",
+    "validate:registry": "npm run validate:registry --prefix server",
+    "build:catalogue": "npm run build:catalogue --prefix server --",
+    "build": "npm run validate:registry && npm run build:catalogue && npm run build --prefix client",
+    "test": "npm test --prefix client && npm test --prefix server",
+    "test:e2e": "npm run test:e2e --prefix client --",
+    "sources:fetch": "npm run sources:fetch --prefix server --",
+    "sources:extract": "npm run sources:extract --prefix server --",
+    "sources:report": "npm run sources:report --prefix server --",
+    "sources": "node server/scripts/sources.mjs",
+    "format:check": "node client/node_modules/prettier/bin/prettier.cjs --check .",
+    "format": "node client/node_modules/prettier/bin/prettier.cjs --write ."
   }
 }

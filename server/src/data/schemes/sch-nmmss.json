@@ -1,0 +1,295 @@
+{
+  "id": "sch-nmmss",
+  "slug": "national-means-cum-merit-scholarship",
+  "officialName": "National Means-cum-Merit Scholarship Scheme (NMMSS)",
+  "shortName": "NMMSS",
+  "domain": "student-scholarship",
+  "authority": {
+    "name": "Department of School Education and Literacy, Ministry of Education, Government of India",
+    "level": "central"
+  },
+  "jurisdiction": "central",
+  "applicableStates": "all",
+  "summary": "Scholarship of Rs 12,000 a year for meritorious Class IX to XII students in government, government-aided, or local body schools, with parental income up to Rs 3.5 lakh a year.",
+  "benefits": [
+    {
+      "id": "ben-scholarship",
+      "type": "maintenance",
+      "description": "Scholarship paid yearly from Class IX, continuing up to Class XII for a maximum of four years",
+      "amount": {
+        "value": 12000,
+        "currency": "INR",
+        "frequency": "year"
+      },
+      "conditions": "Paid at the rate of Rs 1,000 per month, subject to the renewal criteria in the guidelines.",
+      "evidence": ["src-nmmss-guidelines#loc-amount"],
+      "freshness": {
+        "state": "unknown",
+        "checkedAt": "2026-10-10",
+        "checkedBy": "ai-assisted-research",
+        "reviewDue": "2027-04-01"
+      }
+    }
+  ],
+  "eligibility": {
+    "coverage": "partial",
+    "cycle": "2026-27",
+    "notes": "Research draft only. Current-cycle applicability, exact conditions, exceptions, document wording, and completeness require independent human review. Do not use for student assessments.",
+    "evidence": ["src-nmmss-guidelines#loc-scheme"],
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2027-04-01"
+    },
+    "rule": {
+      "id": "r-root",
+      "operator": "allOf",
+      "explanationKey": "root.allOf",
+      "evidence": ["src-nmmss-guidelines#loc-scheme"],
+      "children": [
+        {
+          "id": "r-level",
+          "operator": "eq",
+          "field": "educationLevel",
+          "value": "school",
+          "material": true,
+          "explanationKey": "level.eq",
+          "evidence": ["src-nmmss-guidelines#loc-scheme"]
+        },
+        {
+          "id": "r-income",
+          "operator": "lte",
+          "field": "annualHouseholdIncome",
+          "value": 350000,
+          "unit": "INR/year",
+          "material": true,
+          "explanationKey": "income.lte",
+          "evidence": ["src-nmmss-guidelines#loc-income"]
+        },
+        {
+          "id": "r-institution",
+          "operator": "in",
+          "field": "institutionType",
+          "value": ["govt", "govt-aided"],
+          "material": true,
+          "explanationKey": "institution.in",
+          "evidence": ["src-nmmss-guidelines#loc-school-type"]
+        },
+        {
+          "id": "r-class-eight-marks",
+          "operator": "gte",
+          "field": "academicScore",
+          "value": 55,
+          "scale": "percentage",
+          "context": "previous-year",
+          "material": true,
+          "explanationKey": "score.gte",
+          "evidence": ["src-nmmss-guidelines#loc-selection-marks"]
+        },
+        {
+          "id": "r-not-excluded-school",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "Students studying in Kendriya Vidyalayas, Jawahar Navodaya Vidyalayas, private schools, or residential schools run by central or state government institutions that provide boarding, lodging, and education are not entitled to this scholarship.",
+          "checkHint": "Check with your school whether it falls into any of these excluded categories.",
+          "explanationKey": "manual.excludedSchool",
+          "evidence": ["src-nmmss-guidelines#loc-school-type"]
+        },
+        {
+          "id": "r-selection-exam",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "Selection is through a separate state-level examination conducted during Class VIII, consisting of a Mental Ability Test and a Scholastic Aptitude Test, with a pass mark of 40 per cent in aggregate (32 per cent for Scheduled Caste and Scheduled Tribe students).",
+          "checkHint": "Ask your school or your state education department when the NMMSS selection examination is held.",
+          "explanationKey": "manual.selectionExam",
+          "evidence": ["src-nmmss-guidelines#loc-selection-exam"]
+        },
+        {
+          "id": "r-state-quota",
+          "operator": "manualVerification",
+          "material": true,
+          "reason": "Each state and union territory has a fixed quota of scholarships and applies its own reservation norms, so eligibility also depends on where a student studies.",
+          "checkHint": "Check your state's NMMSS quota and reservation rules with your school or state education department.",
+          "explanationKey": "manual.stateQuota",
+          "evidence": ["src-nmmss-guidelines#loc-scheme"]
+        },
+        {
+          "id": "r-no-other-central-scholarship",
+          "operator": "not",
+          "material": true,
+          "explanationKey": "exclusion.otherScholarship",
+          "evidence": ["src-nmmss-guidelines#loc-one-scholarship"],
+          "child": {
+            "id": "r-other-scholarship",
+            "operator": "eq",
+            "field": "additionalAnswers.receivesOtherScholarship",
+            "value": "yes",
+            "explanationKey": "other.eq",
+            "evidence": ["src-nmmss-guidelines#loc-one-scholarship"]
+          }
+        }
+      ]
+    }
+  },
+  "documents": [
+    {
+      "id": "doc-income-certificate",
+      "type": "income-certificate",
+      "title": "Proof of parental income from all sources",
+      "requirement": "needs-verification",
+      "appliesWhen": null,
+      "notes": "The guidelines set a parental income ceiling at the time of selection but do not name the certificate or the issuing authority. Check the document list on the National Scholarship Portal.",
+      "evidence": ["src-nmmss-guidelines#loc-income"]
+    },
+    {
+      "id": "doc-class-eight-marksheet",
+      "type": "marksheet",
+      "title": "Class VIII examination result",
+      "requirement": "needs-verification",
+      "appliesWhen": null,
+      "notes": "Selection requires at least 55 per cent in the Class VIII examination, relaxable by 5 per cent for Scheduled Caste and Scheduled Tribe students, but the guidelines do not list the documents a student uploads.",
+      "evidence": ["src-nmmss-guidelines#loc-selection-marks"]
+    },
+    {
+      "id": "doc-conduct-certificate",
+      "type": "bonafide-certificate",
+      "title": "Certificate of good conduct from the head of the school",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "notes": "An awardee must maintain good conduct as certified by the head of the institution and continue as a regular student in a government, government-aided, or local body school.",
+      "evidence": ["src-nmmss-guidelines#loc-general-conditions"]
+    },
+    {
+      "id": "doc-bank-details",
+      "type": "bank-details-for-portal",
+      "title": "Bank account for Direct Benefit Transfer",
+      "requirement": "confirmed",
+      "appliesWhen": null,
+      "notes": "Awardees must open an account, preferably with the State Bank of India or any public sector or scheduled bank with core banking facility. Prepare this for the official portal only; Schemelog never asks for account numbers.",
+      "evidence": ["src-nmmss-guidelines#loc-disbursement"]
+    }
+  ],
+  "application": {
+    "cycle": "2026-27",
+    "opens": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "closes": {
+      "state": "unknown",
+      "reason": "not-found"
+    },
+    "freshness": {
+      "state": "unknown",
+      "checkedAt": "2026-10-10",
+      "checkedBy": "ai-assisted-research",
+      "reviewDue": "2026-10-17"
+    }
+  },
+  "applicationSteps": [
+    {
+      "order": 1,
+      "title": "Sit your state's NMMSS selection examination in Class VIII",
+      "description": "Each state and union territory conducts its own Mental Ability Test and Scholastic Aptitude Test for this scheme.",
+      "evidence": ["src-nmmss-guidelines#loc-selection-exam"]
+    },
+    {
+      "order": 2,
+      "title": "Apply on the National Scholarship Portal once selected",
+      "description": "Eligible students apply on the portal; the state government or union territory administration verifies the application and sends it to the Ministry for sanction of funds.",
+      "evidence": ["src-nmmss-guidelines#loc-disbursement"]
+    },
+    {
+      "order": 3,
+      "title": "Renew the scholarship on time each year",
+      "description": "Scholarships are discontinued if a student does not renew their application on the portal within the stipulated time period.",
+      "evidence": ["src-nmmss-guidelines#loc-disbursement"]
+    }
+  ],
+  "links": [
+    {
+      "id": "lnk-guidelines",
+      "purpose": "guidelines",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/NMMSSGuidelines.pdf",
+      "label": "Revised NMMSS guidelines (PDF)",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    },
+    {
+      "id": "lnk-application",
+      "purpose": "application",
+      "url": "https://scholarships.gov.in/",
+      "label": "National Scholarship Portal",
+      "checkedAt": "2026-10-10",
+      "status": "unverified"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-nmmss-guidelines",
+      "url": "https://scholarships.gov.in/public/schemeGuidelines/NMMSSGuidelines.pdf",
+      "title": "Revised guidelines of Central Sector National Means-cum-Merit Scholarship (NMMSS) of the Department of School Education and Literacy, F. No. 1-6/2020-SS",
+      "authority": "Department of School Education and Literacy, Ministry of Education, Government of India",
+      "kind": "guidelines",
+      "edition": "Revised guidelines, March 2022, effective FY 2022-23",
+      "retrievedAt": "2026-10-10",
+      "locators": [
+        {
+          "id": "loc-revisions",
+          "ref": "p.1, covering letter, items i-v"
+        },
+        {
+          "id": "loc-scheme",
+          "ref": "p.4, Annexure-II §1.1 The Scheme"
+        },
+        {
+          "id": "loc-income",
+          "ref": "p.4, Annexure-II §1.1 parental income ceiling"
+        },
+        {
+          "id": "loc-school-type",
+          "ref": "p.4, Annexure-II §1.2"
+        },
+        {
+          "id": "loc-amount",
+          "ref": "p.4, Annexure-II §1.3"
+        },
+        {
+          "id": "loc-selection-marks",
+          "ref": "p.4, Annexure-II §2.2 and p.5, §3.2"
+        },
+        {
+          "id": "loc-selection-exam",
+          "ref": "p.4-5, Annexure-II §2.1 to §3.1"
+        },
+        {
+          "id": "loc-one-scholarship",
+          "ref": "p.5, Annexure-II §4.1"
+        },
+        {
+          "id": "loc-disbursement",
+          "ref": "p.5, Annexure-II §4.2 and §4.3"
+        },
+        {
+          "id": "loc-renewal",
+          "ref": "p.6, Annexure-II §4.4"
+        },
+        {
+          "id": "loc-general-conditions",
+          "ref": "p.6, Annexure-II §5.1"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "curatedBy": "ai-assisted-research",
+    "curatedAt": "2026-10-10",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "conflicts": [],
+    "notesPath": "docs/verification/sch-nmmss.md"
+  },
+  "publicationStatus": "draft",
+  "recordVersion": 1
+}
